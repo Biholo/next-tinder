@@ -1,4 +1,4 @@
-import type { User } from "@/types/chat"
+import type { User } from "@/models/chat"
 import { MapPin } from "lucide-react"
 
 interface ProfilePanelProps {

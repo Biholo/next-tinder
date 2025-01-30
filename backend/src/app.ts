@@ -11,7 +11,7 @@ import matchRoutes from '@/routes/matchRoutes';
 import messageRoutes from '@/routes/messageRoutes';
 import authRoutes from '@/routes/authRoutes';
 import userRoutes from '@/routes/userRoutes';
-import { WebSocketManager } from './websocket/WebSocketManager';
+import { WebSocketManager } from '@/websocket/webSocketManager';
 
 dotenv.config();
 

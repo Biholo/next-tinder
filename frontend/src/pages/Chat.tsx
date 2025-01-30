@@ -50,10 +50,9 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex bg-white">
+    <div className="inset-0 flex bg-white w-full">
       {/* Left Sidebar */}
-      <div className="w-[320px] flex-shrink-0 border-r flex flex-col">
-        {/* User Profile Header */}
+      {/* <div className="w-[320px] flex-shrink-0 border-r flex flex-col">
         <div className="p-4 border-b flex items-center gap-4">
           <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden">
             <img src="/placeholder.svg" alt="Your profile" className="w-full h-full object-cover" />
@@ -68,7 +67,6 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex border-b">
           <button className="flex-1 py-3 px-4 text-center border-b-2 border-[#FF1B5B] text-[#FF1B5B] font-medium">
             Matchs
@@ -76,12 +74,11 @@ export default function ChatPage() {
           <button className="flex-1 py-3 px-4 text-center text-gray-500">Messages</button>
         </div>
 
-        {/* Conversation List */}
         <ConversationList matches={mockMatches} selectedMatchId={selectedMatchId} onSelectMatch={setSelectedMatchId} />
-      </div>
+      </div> */}
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="w-full flex flex-col overflow-hidden">
         {selectedMatch && (
           <>
             <ChatHeader match={selectedMatch} otherUser={selectedMatch.otherUser} />
@@ -99,7 +96,7 @@ export default function ChatPage() {
       </div>
 
       {/* Right Sidebar - Profile Panel */}
-      <div className="w-[320px] flex-shrink-0 border-l">
+      <div className=" w-[400px] border-l">
         {selectedMatch && <ProfilePanel user={selectedMatch.otherUser} />}
       </div>
     </div>

@@ -20,7 +20,9 @@ export class WebSocketManager {
   private clients: Map<string, AuthenticatedWebSocket>;
 
   constructor() {
-    this.wss = new WebSocketServer({ server });
+    this.wss = new WebSocketServer({ 
+        port: 8080
+     });
     this.clients = new Map();
     this.initialize();
   }

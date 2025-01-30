@@ -1,4 +1,4 @@
-import type { Match, User } from "@/types/chat"
+import type { Match, User } from "@/models/chat"
 import { MoreHorizontal } from "lucide-react"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"

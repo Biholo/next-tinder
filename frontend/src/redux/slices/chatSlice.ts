@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import type { Match, Message, User } from '@/types/chat'
+import type { Match, Message, User } from '@/models/chat'
 
 interface ChatState {
   currentUser: User | null
