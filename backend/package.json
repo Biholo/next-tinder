@@ -21,7 +21,7 @@
         "joi": "^17.13.3",
         "jsonwebtoken": "^9.0.2",
         "module-alias": "^2.2.3",
-        "mongoose": "^8.9.1",
+        "mongoose": "^8.9.5",
         "tsconfig-paths": "^4.2.0",
         "websocket": "^1.0.35",
         "ws": "^8.18.0"
