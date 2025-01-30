@@ -1,15 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import Home from './pages/Home'
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
+import Profile from './pages/Profile'
 
 import { ToastContainer } from 'react-toastify'
 
 function App() {
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="App">
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -22,11 +21,10 @@ function App() {
         pauseOnHover
       />
       <Router>
-        <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
-        <Footer />
       </Router>
     </div>
   )
