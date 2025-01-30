@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import UserModel from "@/models/userModel";
 import { IUser } from '@/models/userModel';
 import { IMatch } from '../models/matchModel';
@@ -19,9 +19,13 @@ interface IUserWithPreferences extends IUser {
   };
 }
 
-export const getProfilesToSwipe = async (req: AuthRequest, res: Response) => {
+interface TypedRequestHandler extends RequestHandler {
+  (req: Request, res: Response): Promise<void>;
+}
+
+export const getProfilesToSwipe: TypedRequestHandler = async (req, res) => {
     try {
-      const currentUser = req.user as IUserWithPreferences;
+      const currentUser = (req as AuthRequest).user as IUserWithPreferences;
       if (!currentUser) {
         return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
@@ -74,14 +78,14 @@ export const getProfilesToSwipe = async (req: AuthRequest, res: Response) => {
         .limit(limit)
         .lean();
   
-      res.json(profiles);
+      return res.json(profiles);
     } catch (error) {
       console.error("Erreur lors de la récupération des profils :", error);
-      res.status(500).json({ message: "Erreur lors de la récupération des profils" });
+      return res.status(500).json({ message: "Erreur lors de la récupération des profils" });
     }
   };
   
-  export const updateCurrentUser = async (req: AuthRequest, res: Response) => {
+  export const updateCurrentUser: TypedRequestHandler = async (req, res) => {
     try {
       const allowedUpdates = ['bio', 'location', 'first_name', 'last_name']; // Champs modifiables
       const updates = Object.keys(req.body).reduce((acc, key) => {
@@ -103,16 +107,16 @@ export const getProfilesToSwipe = async (req: AuthRequest, res: Response) => {
         return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
   
-      res.json(user);
+      return res.json(user);
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil :", error);
-      res.status(500).json({ message: "Erreur lors de la mise à jour du profil" });
+      return res.status(500).json({ message: "Erreur lors de la mise à jour du profil" });
     }
   };
   
-  export const updatePictures = async (req: AuthRequest, res: Response) => {
+  export const updatePictures: TypedRequestHandler = async (req, res) => {
     try {
-      const user = req.user as IUser;
+      const user = (req as AuthRequest).user;
       const pictures = req.body.pictures; // Supposé être un tableau d'URLs
   
       if (!Array.isArray(pictures) || pictures.length === 0) {
@@ -136,10 +140,10 @@ export const getProfilesToSwipe = async (req: AuthRequest, res: Response) => {
       // Retourner toutes les photos mises à jour
       const updatedPhotos = await UserPhotoModel.find({ userId: user._id }).select('photoUrl').lean();
   
-      res.json({ message: "Images mises à jour avec succès", photos: updatedPhotos });
+      return res.json({ message: "Images mises à jour avec succès", photos: updatedPhotos });
     } catch (error) {
       console.error("Erreur lors de l'ajout des images :", error);
-      res.status(500).json({ message: "Erreur lors de l'ajout des images" });
+      return res.status(500).json({ message: "Erreur lors de l'ajout des images" });
     }
   };
   

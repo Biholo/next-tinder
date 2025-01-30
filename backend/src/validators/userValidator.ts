@@ -70,16 +70,30 @@ export const loginSchema = Joi.object({
  * Validates data when updating user information.
  */
 export const updateUserSchema = Joi.object({
-  firstName: Joi.string()
+  first_name: Joi.string()
     .min(2)
-    .max(50),
-  lastName: Joi.string()
+    .max(50)
+    .messages({
+      'string.min': 'Le prénom doit contenir au moins 2 caractères',
+      'string.max': 'Le prénom ne peut pas dépasser 50 caractères'
+    }),
+  last_name: Joi.string()
     .min(2)
-    .max(50),
-  email: Joi.string()
-    .email(),
-  roles: Joi.array()
-    .items(Joi.string().valid('ROLE_CLIENT', 'ROLE_ADMIN'))
+    .max(50)
+    .messages({
+      'string.min': 'Le nom doit contenir au moins 2 caractères',
+      'string.max': 'Le nom ne peut pas dépasser 50 caractères'
+    }),
+  bio: Joi.string()
+    .max(500)
+    .messages({
+      'string.max': 'La bio ne peut pas dépasser 500 caractères'
+    }),
+  location: Joi.string()
+    .max(100)
+    .messages({
+      'string.max': 'La localisation ne peut pas dépasser 100 caractères'
+    })
 }).min(1);
 
 /**
@@ -169,4 +183,20 @@ export const updateCurrentUserSchema = Joi.object({
         })
     })
   })
+});
+
+/**
+ * Validator for updating user photos
+ */
+export const updatePhotosSchema = Joi.object({
+  pictures: Joi.array()
+    .items(Joi.string().uri())
+    .min(1)
+    .max(5)
+    .required()
+    .messages({
+      'array.min': 'Au moins une photo est requise',
+      'array.max': 'Maximum 5 photos autorisées',
+      'string.uri': 'URL de photo invalide'
+    })
 });
