@@ -10,9 +10,9 @@ import { IUserPhoto } from "@/models/userPhotoModel";
 import UserPhotoModel from "@/models/userPhotoModel";
 
 interface IUserWithPreferences extends IUser {
-  preferences?: {
-    gender?: 'male' | 'female' | 'both';
-    ageRange?: {
+  preferences: {
+    gender: 'male' | 'female' | 'both';
+    ageRange: {
       min: number;
       max: number;
     };

@@ -1,32 +1,23 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import Home from './pages/Home'
-import Profile from './pages/Profile'
-
-import { ToastContainer } from 'react-toastify'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import { Provider } from 'react-redux'
+import store from './redux/store'
 
 function App() {
 
   return (
-    <div className="App">
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+    <Provider store={store}>
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </Router>
-    </div>
+    </Provider>
   )
 }
 
