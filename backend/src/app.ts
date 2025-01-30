@@ -11,6 +11,7 @@ import matchRoutes from '@/routes/matchRoutes';
 import messageRoutes from '@/routes/messageRoutes';
 import authRoutes from '@/routes/authRoutes';
 import userRoutes from '@/routes/userRoutes';
+import { WebSocketManager } from '@/websocket/WebSocketManager';
 
 dotenv.config();
 
@@ -55,5 +56,7 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Serveur démarré sur http://localhost:${PORT}`);
 });
+
+export const wsManager = new WebSocketManager();
 
 export { app, server };
