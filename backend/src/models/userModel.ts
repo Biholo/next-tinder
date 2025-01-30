@@ -12,8 +12,8 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   gender: string;
-  preferences: {
-    gender: string, enum: ['male', 'female', 'both'], default: 'both';
+  preferences?: {
+    gender: string;
     ageRange: { min: number, max: number};
   };
   dateOfBirth: Date;
