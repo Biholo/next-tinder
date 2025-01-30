@@ -6,8 +6,11 @@ import { rateLimit } from "@/middlewares/rateLimit";
 import { errorHandler } from "@/middlewares/errorHandler";
 import { logger } from "@/middlewares/logger";
 import http from 'http';
-import { WebSocketManager } from './websocket/WebSocketManager';
-
+import swipeRoutes from '@/routes/swipeRoutes';
+import matchRoutes from '@/routes/matchRoutes';
+import messageRoutes from '@/routes/messageRoutes';
+import authRoutes from '@/routes/authRoutes';
+import userRoutes from '@/routes/userRoutes';
 
 dotenv.config();
 
@@ -27,16 +30,14 @@ connect();
 // Limitation des requêtes (100 requêtes par minute par IP)
 app.use(rateLimit(100, 60 * 1000));
 
-// Importation des routes
-import authRoutes from '@/routes/authRoutes';
+
 
 // Utilisation des routes avec préfixes
 app.use('/api/auth', authRoutes);
-
-// Initialiser le WebSocketManager
-export const wsManager = new WebSocketManager(server);
-
-// Register all listeners
+app.use('/api/swipes', swipeRoutes);
+app.use('/api/matches', matchRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/users', userRoutes);
 
 
 // Gestion des erreurs 404
