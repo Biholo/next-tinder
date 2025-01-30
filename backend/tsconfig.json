@@ -24,7 +24,8 @@
       "baseUrl": ".",
       "paths": {
         "@/*": ["src/*"]
-      }
+      },
+      "forceConsistentCasingInFileNames": true
     },
     "exclude": ["node_modules"],
     "include": ["./src/**/*.ts"]
