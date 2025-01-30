@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import SwipeCards from './components/swipe/swiping'
 
 import { ToastContainer } from 'react-toastify'
 
@@ -22,11 +23,9 @@ function App() {
         pauseOnHover
       />
       <Router>
-        <Navbar />
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<SwipeCards />} />
         </Routes>
-        <Footer />
       </Router>
     </div>
   )
