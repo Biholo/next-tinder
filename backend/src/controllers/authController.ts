@@ -7,8 +7,8 @@ interface CustomRequest extends Request {
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 import UserModel, { IUser } from "@/models/userModel";
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET!;
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || "kfefekfe";
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || "fzfzrzfe";
 const TOKEN_EXPIRATION = "1h"; // Expiration du token d'accès
 
 /**
@@ -20,8 +20,8 @@ const TOKEN_EXPIRATION = "1h"; // Expiration du token d'accès
  * @param req.body.roles - Optional roles of the user (defaults to ["client"]).
  */
 export const register = async (req: Request, res: Response): Promise<void> => {
-  const { firstName, lastName, email, password, roles } = req.body;
-
+  const { firstName, lastName, email, password, phone, dateOfBirth, gender, roles } = req.body;
+  
   if (!firstName || !lastName || !email || !password) {
     res.status(400).json({ message: "Tous les champs sont requis." });
     return;
@@ -48,11 +48,36 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       email,
       password: hashedPassword,
       roles: userRoles,
+      phone,
+      dateOfBirth,
+      gender,
+      // preferences: preferences
     });
 
+    console.log('newUser', newUser);
+    console.log('ACCESS_TOKEN_SECRET', ACCESS_TOKEN_SECRET);
+    console.log('REFRESH_TOKEN_SECRET', REFRESH_TOKEN_SECRET);
+    console.log('TOKEN_EXPIRATION', TOKEN_EXPIRATION);
+
+    // Générer les tokens
+    const accessToken = jwt.sign(
+      { id: newUser._id, roles: newUser.roles },
+      ACCESS_TOKEN_SECRET,
+      { expiresIn: TOKEN_EXPIRATION }
+    );
+
+    console.log('accessToken', accessToken);
+
+    const refreshToken = jwt.sign({ id: newUser._id }, REFRESH_TOKEN_SECRET);
+
+    console.log('refreshToken', refreshToken);
+    // Stocker le refresh token
+    newUser.refreshToken = refreshToken;
     await newUser.save();
 
-    res.status(201).json({ message: "Utilisateur créé avec succès." });
+    console.log('newUser', newUser);
+
+    res.status(200).json({ access_token: accessToken, refresh_token: refreshToken });
   } catch (error) {
     res.status(500).json({ message: "Erreur lors de l'inscription.", error });
   }
