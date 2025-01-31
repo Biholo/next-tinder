@@ -1,14 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, Briefcase, Shield, Heart, MessageCircle, User } from "lucide-react"
-import { useNavigate, Link } from "react-router-dom"
-import {useAppDispatch  } from "@/hooks/useAppDispatch"
+import { Users, User } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { useAppDispatch } from "@/hooks/useAppDispatch"
 import { getMatches } from "@/redux/slices/matcheSlice"
 import { useAppSelector } from "@/hooks/useAppSelector"
-
-
-
 
 interface Match {
   _id: string
@@ -16,6 +13,14 @@ interface Match {
   user2_id: string
   createdAt: string
   updatedAt: string
+  match_id: string
+  user: {
+    firstName: string
+    photos: { photoUrl: string }[]
+  }
+  lastMessage?: {
+    content: string
+  }
 }
 
 interface Message {
@@ -29,14 +34,14 @@ interface Message {
 
 export function AppSidebar() {
   const [activeTab, setActiveTab] = useState("messages")
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
   const { matches } = useAppSelector((state) => state.matches)
 
   // Séparer les matches avec et sans messages
-  const matchesWithMessages = matches.filter(match => match.lastMessage)
-  const matchesWithoutMessages = matches.filter(match => !match.lastMessage)
+  const matchesWithMessages = matches.filter((match) => match.lastMessage)
+  const matchesWithoutMessages = matches.filter((match) => !match.lastMessage)
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -46,17 +51,14 @@ export function AppSidebar() {
   }, [dispatch])
 
   return (
-    <div className="w-[380px] flex flex-col h-screen border-r border-gray-200">
+    <div className="w-80 flex flex-col h-screen border-r border-gray-200">
       {/* Header */}
       <div className="h-16 bg-[#FF385C] px-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 cursor-pointer "
-          onClick={() => navigate('/profile')}
-        >
-          <div
-            className="w-8 h-8 rounded-full bg-gray-300 overflow-hidden">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/profile")}>
+          <div className="w-8 h-8 rounded-full bg-gray-300 overflow-hidden">
             {user?.photos && user.photos[0] ? (
               <img
-                src={user.photos[0].photoUrl}
+                src={user.photos[0].photoUrl || "/placeholder.svg"}
                 alt={`Photo de ${user.firstName}`}
                 className="w-full h-full object-cover"
               />
@@ -66,16 +68,14 @@ export function AppSidebar() {
               </div>
             )}
           </div>
-          <span className="font-medium text-white">{user?.firstName || 'Utilisateur'}</span>
+          <span className="font-medium text-white">{user?.firstName || "Utilisateur"}</span>
         </div>
         <div className="flex items-center gap-4">
-          {[Users, 
-          // Briefcase, Shield
-        ].map((Icon, index) => (
-            <button 
-            key={index} 
-            className="rounded-full bg-white/20 p-2 text-white hover:bg-white/30"
-            onClick={() => navigate('/')}
+          {[Users].map((Icon, index) => (
+            <button
+              key={index}
+              className="rounded-full bg-white/20 p-2 text-white hover:bg-white/30"
+              onClick={() => navigate("/")}
             >
               <Icon className="h-5 w-5" />
             </button>
@@ -103,8 +103,8 @@ export function AppSidebar() {
         {activeTab === "matchs" && (
           <div className="grid grid-cols-3 gap-1 p-1">
             {matchesWithoutMessages.map((match) => (
-              <div 
-                key={match.match_id} 
+              <div
+                key={match.match_id}
                 className="relative aspect-square cursor-pointer overflow-hidden rounded-lg"
                 onClick={() => navigate(`/chat/${match.match_id}`)}
               >
@@ -126,8 +126,8 @@ export function AppSidebar() {
         {activeTab === "messages" && (
           <div className="flex flex-col">
             {matchesWithMessages.map((match) => (
-              <div 
-                key={match.match_id} 
+              <div
+                key={match.match_id}
                 className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer"
                 onClick={() => navigate(`/chat/${match.match_id}`)}
               >
@@ -144,9 +144,7 @@ export function AppSidebar() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{match.user.firstName}</span>
                   </div>
-                  <span className="truncate text-sm text-gray-500">
-                    {match.lastMessage?.content}
-                  </span>
+                  <span className="truncate text-sm text-gray-500">{match.lastMessage?.content}</span>
                 </div>
               </div>
             ))}
