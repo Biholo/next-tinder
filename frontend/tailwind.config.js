@@ -13,7 +13,6 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
-  			primary: "#FF1B5B",
   			ring: "hsl(var(--ring))",
   		}
   	}

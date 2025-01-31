@@ -1,11 +1,17 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authSlice from './slices/authSlice';
 import chatSlice from './slices/messageSlice';
+import matchSlice from './slices/matcheSlice';
+import userSlice from './slices/userSlice';
+import messageSlice from './slices/messageSlice';
 
 const store = configureStore({
     reducer: {
         auth: authSlice,
-        chat: chatSlice
+        chat: chatSlice,
+        matches: matchSlice,
+        user: userSlice,
+        message: messageSlice
 
     },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware({
