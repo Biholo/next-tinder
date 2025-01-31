@@ -5,6 +5,7 @@ import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { register } from "@/redux/slices/authSlice";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { useNavigate } from "react-router-dom";
+import { registerSchema } from "@/validators/registerValidator";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function Register() {
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState<any>({}); 
 
   const dispatch = useAppDispatch();
 
@@ -49,9 +51,21 @@ export default function Register() {
   const handleRegister = async (e: React.FormEvent) => {
     try {
       e.preventDefault();
+
+      const { error } = registerSchema.validate({ ...formData, confirmPassword });
+
+      if (error) {
+        const formattedErrors: any = {};
+        error.details.forEach((err) => {
+          formattedErrors[err.path[0]] = err.message;
+        });
+        setErrors(formattedErrors);
+        return;
+      }
+
       const response = await dispatch(register(formData));
       console.log('response', response);
-        if(response?.tokens.accessToken) {
+      if (response?.tokens.accessToken) {
         navigate("/");
       }
     } catch (error) {
@@ -66,91 +80,100 @@ export default function Register() {
 
         <div className="space-y-4">
           <div className="flex gap-2">
-            <Input
-              type="text"
-              name="firstName"
-              placeholder="Nom"
-              value={formData.firstName}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-            />
-            <Input
-              type="text"
-              name="lastName"
-              placeholder="Prénom"
-              value={formData.lastName}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-            />
+            <div className="w-full">
+              <Input
+                type="text"
+                name="lastName"
+                placeholder="Nom"
+                value={formData.lastName}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              />
+              {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName}</p>}
+            </div>
+            <div className="w-full">
+              <Input
+                type="text"
+                name="firstName"
+                placeholder="Prénom"
+                value={formData.firstName}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              />
+              {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName}</p>}
+            </div>
           </div>
-          <Input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-          />
-          <Input
-            type="tel"
-            name="phone"
-            placeholder="Numéro de téléphone"
-            value={formData.phone}
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-          />
-          <Input
-            type="date"
-            name="dateOfBirth"
-            placeholder="Date de naissance"
-            value={formData.dateOfBirth}
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-          />
+          <div>
+            <Input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+            />
+            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+          </div>
+          <div>
+            <Input
+              type="tel"
+              name="phone"
+              placeholder="Numéro de téléphone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+            />
+            {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
+          </div>
+          <div>
+            <Input
+              type="date"
+              name="dateOfBirth"
+              placeholder="Date de naissance"
+              value={formData.dateOfBirth}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+            />
+            {errors.dateOfBirth && <p className="text-red-500 text-sm">{errors.dateOfBirth}</p>}
+          </div>
           <div className="flex gap-2">
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            className="w-full px-4 py-1 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 bg-white"
-          >
-            <option value="male" disabled>
-              Genre
-            </option>
-            <option value="male">Homme</option>
-            <option value="female">Femme</option>
-            <option value="other">Autre</option>
-          </select>
-          {/* <select
-            name="preferences"
-            value={formData.preferences.gender}
-            onChange={handlePreferencesChange}
-            className="w-full px-4 py-1 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 bg-white"
-          >
-            <option value="both" disabled>
-              Intéressé(e) par
-            </option>
-            <option value="male">Hommes</option>
-            <option value="female">Femmes</option>
-            <option value="both">Tous</option>
-          </select> */}
+            <select
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              className="w-full px-4 py-1 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 bg-white"
+            >
+              <option value="" disabled>
+                Genre
+              </option>
+              <option value="male">Homme</option>
+              <option value="female">Femme</option>
+              <option value="other">Autre</option>
+            </select>
+            {errors.gender && <p className="text-red-500 text-sm">{errors.gender}</p>}
           </div>
-          <Input
-            type="password"
-            name="password"
-            placeholder="Mot de passe"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-          />
-          <Input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirmer le mot de passe"
-            value={confirmPassword}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-            className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-          />
+          <div>
+            <Input
+              type="password"
+              name="password"
+              placeholder="Mot de passe"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+            />
+            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+          </div>
+          <div>
+            <Input
+              type="password"
+              name="confirmPassword"
+              placeholder="Confirmer le mot de passe"
+              value={confirmPassword}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+            />
+            {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
+          </div>
         </div>
 
         <Button
