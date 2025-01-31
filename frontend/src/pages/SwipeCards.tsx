@@ -54,6 +54,7 @@ export default function SwipeCards() {
         const response = await dispatch(getUsersToSwipe())
         if (response.payload) {
           setProfiles(response.payload)
+          console.log('Nous avons récupéré', response.payload.length, 'profils')
         }
       } catch (error) {
         console.error("Erreur lors du chargement des profils:", error)
@@ -69,8 +70,7 @@ export default function SwipeCards() {
   const swipe = (direction: Direction) => {
     if (profileIndex >= profiles.length || !profiles[profileIndex]) return
 
-    const topCardIndex = currentProfiles.length - 1
-    const currentCard = cardRefs.current[topCardIndex]
+    const currentCard = cardRefs.current[0]
 
     if (currentCard) {
       currentCard.swipe(direction)
@@ -99,40 +99,60 @@ export default function SwipeCards() {
   }
 
   const nextImage = () => {
-    if (!profiles[profileIndex]?.photos?.length) return
-    setImageIndex((prev: number) => (prev + 1) % profiles[profileIndex].photos.length)
-  }
+    const currentProfile = profiles[profileIndex];
+    if (!currentProfile?.photos?.length) return;
+    
+    if (currentProfile.photos.length === 1) {
+      setImageIndex(0);
+    } else {
+      setImageIndex((prev: number) => (prev + 1) % currentProfile.photos.length);
+    }
+  };
 
   const prevImage = () => {
-    if (!profiles[profileIndex]?.photos?.length) return
-    setImageIndex(
-      (prev: number) => (prev - 1 + profiles[profileIndex].photos.length) % profiles[profileIndex].photos.length,
-    )
-  }
+    const currentProfile = profiles[profileIndex];
+    if (!currentProfile?.photos?.length) return;
+    
+    if (currentProfile.photos.length === 1) {
+      setImageIndex(0);
+    } else {
+      setImageIndex((prev: number) => (prev - 1 + currentProfile.photos.length) % currentProfile.photos.length);
+    }
+  };
 
   if (profiles.length === 0) {
     return <div className="flex items-center justify-center h-screen">Chargement des profils...</div>
+  }
+
+  // Vérifier si le profil courant existe et a des photos
+  const currentProfile = profiles[profileIndex];
+  if (!currentProfile?.photos?.length) {
+    return <div className="flex items-center justify-center h-screen">Aucune photo disponible</div>;
   }
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 w-full">
       <div className="flex-grow flex flex-col overflow-hidden">
         <div className="relative flex-grow flex justify-center items-center">
-          {currentProfiles.map((profile: Profile, index: number) => (
+          {currentProfiles.slice(0, 1).map((profile: Profile, index: number) => (
             <TinderCard
               key={profile._id}
-              ref={(el: TinderCardRef | null) => (cardRefs.current[index] = el)}
+              ref={(el: TinderCardRef | null) => (cardRefs.current[0] = el)}
               onSwipe={(dir: Direction) => onSwipe(dir, profile.firstName)}
               onCardLeftScreen={() => onCardLeftScreen(profile.firstName)}
+              flickOnSwipe={true}
+              
               preventSwipe={["down"]}
               className="absolute w-[90%] max-w-md h-[70vh]"
             >
               <div className="relative w-full h-full bg-white rounded-xl shadow-xl overflow-hidden">
-                <img
-                  src={profile.photos[imageIndex].photoUrl || "/placeholder.svg"}
-                  alt={profile.firstName}
-                  className="object-cover w-full h-full"
-                />
+                {profile.photos && profile.photos.length > 0 && (
+                  <img
+                    src={profile.photos[imageIndex]?.photoUrl || "/placeholder.svg"}
+                    alt={profile.firstName}
+                    className="object-cover w-full h-full"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-20 left-4 right-4 text-white">
                   <h2 className="text-2xl font-bold">
@@ -209,28 +229,46 @@ export default function SwipeCards() {
               key={direction}
               size="icon"
               variant="outline"
-              className="h-12 w-12 rounded-full border-2 bg-white/80 backdrop-blur-sm"
+              className={`h-12 w-12 rounded-full border-2 bg-white hover:bg-gray-100 transition-colors ${
+                direction === "DISLIKE"
+                  ? "border-rose-500 text-rose-500 hover:bg-rose-50"
+                  : direction === "LIKE"
+                    ? "border-green-500 text-green-500 hover:bg-green-50"
+                    : "border-blue-500 text-blue-500 hover:bg-blue-50"
+              }`}
               onClick={() => swipe(direction as Direction)}
             >
-              {direction === "DISLIKE" && <X className="h-6 w-6 text-rose-500" />}
-              {direction === "up" && <Star className="h-6 w-6 text-blue-500" />}
-              {direction === "LIKE" && <Heart className="h-6 w-6 text-green-500" />}
+              {direction === "DISLIKE" && <X className="h-6 w-6" />}
+              {direction === "up" && <Star className="h-6 w-6" />}
+              {direction === "LIKE" && <Heart className="h-6 w-6" />}
             </Button>
           ))}
         </div>
 
         <div className="flex items-center justify-center gap-4 px-4 py-2">
-          <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1 bg-white/80 backdrop-blur-sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs flex items-center gap-1 bg-white hover:bg-rose-50 text-rose-500"
+          >
             <X className="h-4 w-4" />
             DISLIKE
             <kbd className="ml-1 px-1 py-0.5 text-[10px] font-mono bg-gray-100 rounded">←</kbd>
           </Button>
-          <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1 bg-white/80 backdrop-blur-sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs flex items-center gap-1 bg-white hover:bg-green-50 text-green-500"
+          >
             <Heart className="h-4 w-4" />
             LIKE
             <kbd className="ml-1 px-1 py-0.5 text-[10px] font-mono bg-gray-100 rounded">→</kbd>
           </Button>
-          <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1 bg-white/80 backdrop-blur-sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs flex items-center gap-1 bg-white hover:bg-blue-50 text-blue-500"
+          >
             <Star className="h-4 w-4" />
             Superlike
             <kbd className="ml-1 px-1 py-0.5 text-[10px] font-mono bg-gray-100 rounded">↑</kbd>
