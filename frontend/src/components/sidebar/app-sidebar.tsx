@@ -1,112 +1,46 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, Briefcase, Shield } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Users, Briefcase, Shield, Heart, MessageCircle, User } from "lucide-react"
+import { useNavigate, Link } from "react-router-dom"
 import {useAppDispatch  } from "@/hooks/useAppDispatch"
 import { getMatches } from "@/redux/slices/matcheSlice"
+import { useAppSelector } from "@/hooks/useAppSelector"
 
 
-// Sample data
-const messages = [
-  {
-    id: 1,
-    name: "Sabrina",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uQSQCWyeL4023sghlhqyHEZLhpLHZ8.png",
-    message: "Activité récente, matche dès maintenant !",
-    online: true,
-    likes: true,
-  },
-  {
-    id: 2,
-    name: "Emilie",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uQSQCWyeL4023sghlhqyHEZLhpLHZ8.png",
-    message: "Salut cv",
-    online: false,
-  },
-  {
-    id: 3,
-    name: "Chris",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uQSQCWyeL4023sghlhqyHEZLhpLHZ8.png",
-    message: "Salut 👋 le outfit sur la 2e pho...",
-    online: false,
-  },
-  {
-    id: 4,
-    name: "Axeliya",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uQSQCWyeL4023sghlhqyHEZLhpLHZ8.png",
-    message: "J'ai jamais vu inception",
-    online: true,
-  },
-  {
-    id: 5,
-    name: "Evelyn",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uQSQCWyeL4023sghlhqyHEZLhpLHZ8.png",
-    message: "evelynfeng23",
-    online: false,
-  },
-]
 
-const matches = [
-  { id: 1, name: "3 Likes", likes: 3, badge: "⭐️" },
-  {
-    id: 2,
-    name: "Lea",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-WkTkdakVMdye1gW9oUcewo2sqvFLBw.png",
-  },
-  {
-    id: 3,
-    name: "Nawres",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-WkTkdakVMdye1gW9oUcewo2sqvFLBw.png",
-  },
-  {
-    id: 4,
-    name: "Marie-Emeli...",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-WkTkdakVMdye1gW9oUcewo2sqvFLBw.png",
-  },
-  {
-    id: 5,
-    name: "Michelle",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-WkTkdakVMdye1gW9oUcewo2sqvFLBw.png",
-  },
-  {
-    id: 6,
-    name: "Nonma",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-WkTkdakVMdye1gW9oUcewo2sqvFLBw.png",
-  },
-  {
-    id: 7,
-    name: "Marine",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-WkTkdakVMdye1gW9oUcewo2sqvFLBw.png",
-  },
-  {
-    id: 8,
-    name: "Diana",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-WkTkdakVMdye1gW9oUcewo2sqvFLBw.png",
-  },
-  {
-    id: 9,
-    name: "Jade",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-WkTkdakVMdye1gW9oUcewo2sqvFLBw.png",
-  },
-]
+
+interface Match {
+  _id: string
+  user1_id: string
+  user2_id: string
+  createdAt: string
+  updatedAt: string
+}
+
+interface Message {
+  _id: string
+  matchId: string
+  senderId: string
+  content: string
+  createdAt: string
+  updatedAt: string
+}
 
 export function AppSidebar() {
   const [activeTab, setActiveTab] = useState("messages")
-  const [matchesWithMessages, setMatchesWithMessages] = useState([])
-  const [matches, setMatches] = useState([])
   const navigate = useNavigate();
   const dispatch = useAppDispatch()
+  const { user } = useAppSelector((state) => state.auth)
+  const { matches } = useAppSelector((state) => state.matches)
+
+  // Séparer les matches avec et sans messages
+  const matchesWithMessages = matches.filter(match => match.lastMessage)
+  const matchesWithoutMessages = matches.filter(match => !match.lastMessage)
 
   useEffect(() => {
     const fetchMatches = async () => {
-      const initialMatches = await dispatch(getMatches())
-      console.log('initialMatches', initialMatches)
-      if(initialMatches.payload) {
-        
-        setMatches(initialMatches.payload)
-      }
-      
+      await dispatch(getMatches())
     }
     fetchMatches()
   }, [dispatch])
@@ -120,13 +54,19 @@ export function AppSidebar() {
         >
           <div
             className="w-8 h-8 rounded-full bg-gray-300 overflow-hidden">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-WkTkdakVMdye1gW9oUcewo2sqvFLBw.png"
-              alt="Kilian"
-              className="w-full h-full object-cover"
-            />
+            {user?.photos && user.photos[0] ? (
+              <img
+                src={user.photos[0].photoUrl}
+                alt={`Photo de ${user.firstName}`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <User className="w-6 h-6 text-gray-500" />
+              </div>
+            )}
           </div>
-          <span className="font-medium text-white">Kilian</span>
+          <span className="font-medium text-white">{user?.firstName || 'Utilisateur'}</span>
         </div>
         <div className="flex items-center gap-4">
           {[Users, 
@@ -148,8 +88,9 @@ export function AppSidebar() {
         {["matchs", "messages"].map((tab) => (
           <button
             key={tab}
-            className={`flex-1 py-3 px-4 text-sm font-medium ${activeTab === tab ? "text-[#FF385C] border-b-2 border-[#FF385C]" : "text-gray-500 hover:text-gray-700"
-              }`}
+            className={`flex-1 py-3 px-4 text-sm font-medium ${
+              activeTab === tab ? "text-[#FF385C] border-b-2 border-[#FF385C]" : "text-gray-500 hover:text-gray-700"
+            }`}
             onClick={() => setActiveTab(tab)}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -161,30 +102,20 @@ export function AppSidebar() {
       <div className="flex-1 overflow-y-auto">
         {activeTab === "matchs" && (
           <div className="grid grid-cols-3 gap-1 p-1">
-            {matches.map((match) => (
+            {matchesWithoutMessages.map((match) => (
               <div 
-              key={match.id} 
-              className="relative aspect-square cursor-pointer overflow-hidden rounded-lg"
-              onClick={() => navigate(`/chat/${match.id}`)}
+                key={match.match_id} 
+                className="relative aspect-square cursor-pointer overflow-hidden rounded-lg"
+                onClick={() => navigate(`/chat/${match.match_id}`)}
               >
-                {match.image ? (
-                  <img
-                    src={match.image || "/placeholder.svg"}
-                    alt={match.name}
-                    className="h-full w-full object-cover transition-transform hover:scale-110"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center bg-yellow-100 text-yellow-900">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{match.likes}</div>
-                      <div className="text-sm">{match.name}</div>
-                      <div className="text-lg">{match.badge}</div>
-                    </div>
-                  </div>
-                )}
+                <img
+                  src={match.user.photos[0]?.photoUrl || "/placeholder.svg"}
+                  alt={match.user.firstName}
+                  className="h-full w-full object-cover transition-transform hover:scale-110"
+                />
                 <div className="absolute bottom-1 left-1 right-1">
                   <div className="truncate rounded bg-black/40 px-2 py-0.5 text-center text-sm font-medium text-white">
-                    {match.name}
+                    {match.user.firstName}
                   </div>
                 </div>
               </div>
@@ -194,34 +125,28 @@ export function AppSidebar() {
 
         {activeTab === "messages" && (
           <div className="flex flex-col">
-            {matchesWithMessages.map((message) => (
+            {matchesWithMessages.map((match) => (
               <div 
-              key={message.id} 
-              className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer"
-              onClick={() => navigate(`/chat/${message.id}`)}
+                key={match.match_id} 
+                className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                onClick={() => navigate(`/chat/${match.match_id}`)}
               >
                 <div className="relative flex-shrink-0">
                   <div className="w-12 h-12 rounded-full overflow-hidden">
                     <img
-                      src={message.image || "/placeholder.svg"}
-                      alt={message.name}
+                      src={match.user.photos[0]?.photoUrl || "/placeholder.svg"}
+                      alt={match.user.firstName}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  {message.online && (
-                    <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
-                  )}
                 </div>
                 <div className="flex flex-1 flex-col min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{message.name}</span>
-                    {message.likes && (
-                      <span className="px-1 py-0.5 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded">
-                        LIKES YOU
-                      </span>
-                    )}
+                    <span className="font-medium">{match.user.firstName}</span>
                   </div>
-                  <span className="truncate text-sm text-gray-500">{message.message}</span>
+                  <span className="truncate text-sm text-gray-500">
+                    {match.lastMessage?.content}
+                  </span>
                 </div>
               </div>
             ))}

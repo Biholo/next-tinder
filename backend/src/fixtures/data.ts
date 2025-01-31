@@ -32,8 +32,8 @@ const mainUser = {
     updatedAt: new Date()
 };
 
-// Génération de 50 utilisateurs
-const otherUsers = Array.from({ length: 50 }, () => {
+// Génération de 250 utilisateurs (pour avoir assez d'utilisateurs pour 200 matches)
+const otherUsers = Array.from({ length: 250 }, () => {
     const gender = faker.helpers.arrayElement(['male', 'female']) as 'male' | 'female';
     const firstName = gender === 'male' ? faker.person.firstName('male') : faker.person.firstName('female');
     return {
@@ -78,31 +78,28 @@ const otherUsersPhotos = otherUsers.flatMap(user =>
     }))
 );
 
-// Génération des swipes (25 likes, 25 dislikes pour l'admin)
-const swipes = otherUsers.slice(0, 50).map((user, index) => {
-    const isLike = index < 25; // Les 25 premiers sont des likes
-    return {
+// Génération des swipes pour 200 matches
+const swipes = otherUsers.slice(0, 200).flatMap(user => [
+    {
         _id: new ObjectId(),
         userId: mainUser._id,
         targetId: user._id,
-        direction: isLike ? 'LIKE' : 'DISLIKE',
+        direction: 'LIKE',
         createdAt: faker.date.recent(),
         updatedAt: faker.date.recent()
-    };
-});
+    },
+    {
+        _id: new ObjectId(),
+        userId: user._id,
+        targetId: mainUser._id,
+        direction: 'LIKE',
+        createdAt: faker.date.recent(),
+        updatedAt: faker.date.recent()
+    }
+]);
 
-// Swipes réciproques pour créer des matches (15 utilisateurs parmi les likes)
-const reciprocalSwipes = otherUsers.slice(0, 15).map(user => ({
-    _id: new ObjectId(),
-    userId: user._id,
-    targetId: mainUser._id,
-    direction: 'LIKE',
-    createdAt: faker.date.recent(),
-    updatedAt: faker.date.recent()
-}));
-
-// Création des matches pour les swipes réciproques
-const matches = otherUsers.slice(0, 15).map(user => ({
+// Création des 200 matches
+const matches = otherUsers.slice(0, 200).map(user => ({
     _id: new ObjectId(),
     user1_id: mainUser._id,
     user2_id: user._id,
@@ -110,25 +107,27 @@ const matches = otherUsers.slice(0, 15).map(user => ({
     updatedAt: faker.date.recent()
 }));
 
-// Génération de messages pour chaque match
-const messages = matches.flatMap(match => 
-    Array.from({ length: faker.number.int({ min: 5, max: 15 }) }, () => {
-        const isFromMain = faker.datatype.boolean();
-        return {
-            _id: new ObjectId(),
-            matchId: match._id,
-            senderId: isFromMain ? mainUser._id : match.user2_id,
-            content: faker.lorem.sentence(),
-            createdAt: faker.date.recent(),
-            updatedAt: faker.date.recent()
-        };
-    })
-);
+// Génération de messages pour seulement 50% des matches (2-5 messages par match)
+const messages = matches
+    .slice(0, Math.floor(matches.length / 2)) // Prend seulement la moitié des matches
+    .flatMap(match => 
+        Array.from({ length: faker.number.int({ min: 2, max: 5 }) }, () => {
+            const isFromMain = faker.datatype.boolean();
+            return {
+                _id: new ObjectId(),
+                matchId: match._id,
+                senderId: isFromMain ? mainUser._id : match.user2_id,
+                content: faker.lorem.sentence(),
+                createdAt: faker.date.recent(),
+                updatedAt: faker.date.recent()
+            };
+        })
+    );
 
 export const fixtures = {
     users: [mainUser, ...otherUsers],
     photos: [...mainUserPhotos, ...otherUsersPhotos],
-    swipes: [...swipes, ...reciprocalSwipes],
+    swipes,
     matches,
     messages
 };
