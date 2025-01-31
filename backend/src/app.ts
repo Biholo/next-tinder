@@ -11,7 +11,8 @@ import matchRoutes from '@/routes/matchRoutes';
 import messageRoutes from '@/routes/messageRoutes';
 import authRoutes from '@/routes/authRoutes';
 import userRoutes from '@/routes/userRoutes';
-import { WebSocketManager } from '@/websocket/WebSocketManager';
+import { WebSocketManager } from '@/websocket/webSocketManager';
+import { insertFixtures } from '@/fixtures/data';
 
 dotenv.config();
 
@@ -31,7 +32,8 @@ connect();
 // Limitation des requêtes (100 requêtes par minute par IP)
 app.use(rateLimit(100, 60 * 1000));
 
-
+// Insertion des fixtures
+insertFixtures();
 
 // Utilisation des routes avec préfixes
 app.use('/api/auth', authRoutes);
@@ -52,7 +54,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Lancer le serveur
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8001;
 server.listen(PORT, () => {
   console.log(`Serveur démarré sur http://localhost:${PORT}`);
 });

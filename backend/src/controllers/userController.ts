@@ -7,9 +7,9 @@ import { AuthRequest } from "@/types/auth";
 import UserPhotoModel from "@/models/userPhotoModel";
 
 interface IUserWithPreferences extends IUser {
-  preferences?: {
-    gender?: 'male' | 'female' | 'both';
-    ageRange?: {
+  preferences: {
+    gender: 'male' | 'female' | 'both';
+    ageRange: {
       min: number;
       max: number;
     };
@@ -71,11 +71,35 @@ export const getProfilesToSwipe: TypedRequestHandler = async (req, res) => {
   
       const limit = Number(req.query.limit) || 10; // Permettre une pagination
       const profiles = await UserModel.find(query)
-        .select('first_name last_name bio photos gender birth_date')
+        .select('firstName lastName bio gender dateOfBirth location preferences photos')
         .limit(limit)
         .lean();
-  
-      return res.json(profiles);
+
+    // Récupérer les photos de chaque profil
+    const profilesWithPhotos = await Promise.all(profiles.map(async (profile) => {
+      const photos = await UserPhotoModel.find({ userId: profile._id }).select('photoUrl').lean();
+      return { ...profile, photos };
+    }));
+
+      // Calculer l'âge pour chaque profil
+      const profilesWithAge = profilesWithPhotos.map(profile => {
+        const age = profile.dateOfBirth 
+          ? Math.floor((new Date().getTime() - new Date(profile.dateOfBirth).getTime()) / 3.15576e+10)
+          : null;
+
+        return {
+          ...profile,
+          age,
+          birth_date: undefined // On ne renvoie pas la date de naissance directement
+        };
+      });
+
+      
+
+      return res.json({
+        message: "Profils récupérés avec succès",
+        data: profilesWithAge
+      });
     } catch (error) {
       console.error("Erreur lors de la récupération des profils :", error);
       return res.status(500).json({ message: "Erreur lors de la récupération des profils" });
@@ -104,7 +128,10 @@ export const getProfilesToSwipe: TypedRequestHandler = async (req, res) => {
         return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
   
-      return res.json(user);
+      return res.json({
+        message: "Profil mis à jour avec succès",
+        data: user
+      });
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil :", error);
       return res.status(500).json({ message: "Erreur lors de la mise à jour du profil" });
@@ -137,7 +164,10 @@ export const getProfilesToSwipe: TypedRequestHandler = async (req, res) => {
       // Retourner toutes les photos mises à jour
       const updatedPhotos = await UserPhotoModel.find({ userId: user._id }).select('photoUrl').lean();
   
-      return res.json({ message: "Images mises à jour avec succès", photos: updatedPhotos });
+      return res.json({
+        message: "Images mises à jour avec succès",
+        data: updatedPhotos
+      });
     } catch (error) {
       console.error("Erreur lors de l'ajout des images :", error);
       return res.status(500).json({ message: "Erreur lors de l'ajout des images" });

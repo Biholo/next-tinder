@@ -1,32 +1,93 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useAppDispatch } from './hooks/useAppDispatch'
 
-import Home from './pages/Home'
-import Profile from './pages/Profile'
-
+import Home from '@/pages/Home'
+import Chat from '@/pages/Chat'
+import Login from '@/pages/Login'
+import Register from '@/pages/Register'
+import Profile from '@/pages/Profile'
+import { AppSidebar } from '@/components/sidebar/app-sidebar'
+import { useEffect } from 'react'
+import { autoLogin } from '@/redux/slices/authSlice'
+import { useNavigate } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useAppSelector } from './hooks/useAppSelector'
+import Loader from '@/components/loader/Loader'
+
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAppSelector((state) => state.auth)
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />
+  }
+  return children
+}
 
 function App() {
+  const { isAuthenticated, loading } = useAppSelector((state) => state.auth)
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  
+  useEffect(() => {
+    dispatch(autoLogin());
+
+    if (isAuthenticated) {
+      navigate('/');
+    } else {
+      navigate('/login');
+    }
+  }, []);
+
+  if (loading) {
+    return <Loader />
+  }
 
   return (
-    <div className="App">
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      <Router>
+    <>
+      <div className="flex w-full">
+        <ToastContainer 
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+        />
+        {isAuthenticated && <AppSidebar />}
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/profile" element={<Profile />} />
+          {isAuthenticated ? (
+            <>
+              <Route path="/" element={
+                <PrivateRoute>
+                  <Home />
+                </PrivateRoute>
+              } />
+              <Route path="/chat/:matchId" element={
+                <PrivateRoute>
+                  <Chat />
+                </PrivateRoute>
+              } />
+              <Route path="/profile" element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              } />
+            </>
+          ) : (
+            <>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="*" element={<Navigate to="/login" />} />
+            </>
+          )}
         </Routes>
-      </Router>
-    </div>
+      </div>
+    </>
+
   )
 }
 

@@ -50,7 +50,7 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 mx-auto">
       <div
         ref={dialogRef}
         className="bg-white w-full max-w-md h-[80vh] rounded-xl overflow-hidden flex flex-col"

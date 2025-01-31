@@ -56,7 +56,7 @@ export const registerSchema = Joi.object({
       min: Joi.number().integer().min(18).max(100).optional(),
       max: Joi.number().integer().min(18).max(100).optional()
     }).optional()
-  }).optional()
+  }).optional(),
 });
 
 /**
@@ -144,14 +144,14 @@ export const updateUserPermissionsSchema = Joi.object({
  * Validator for updating current user profile
  */
 export const updateCurrentUserSchema = Joi.object({
-  firstName: Joi.string()
+  first_name: Joi.string()
     .min(2)
     .max(50)
     .messages({
       'string.min': 'Le prénom doit contenir au moins 2 caractères',
       'string.max': 'Le prénom ne peut pas dépasser 50 caractères'
     }),
-  lastName: Joi.string()
+  last_name: Joi.string()
     .min(2)
     .max(50)
     .messages({
@@ -163,10 +163,15 @@ export const updateCurrentUserSchema = Joi.object({
     .messages({
       'string.max': 'La bio ne peut pas dépasser 500 caractères'
     }),
-  birthDate: Joi.date()
+  birth_date: Joi.date()
     .iso()
     .messages({
       'date.base': 'La date de naissance doit être une date valide'
+    }),
+  phone: Joi.string()
+    .pattern(/^[0-9+\s-]{8,15}$/)
+    .messages({
+      'string.pattern.base': 'Le numéro de téléphone doit être valide'
     }),
   gender: Joi.string()
     .valid('male', 'female', 'other')
@@ -196,7 +201,7 @@ export const updateCurrentUserSchema = Joi.object({
         })
     })
   })
-});
+}).min(1);
 
 /**
  * Validator for updating user photos
