@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
@@ -6,6 +6,8 @@ import { register } from "@/redux/slices/authSlice";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { useNavigate } from "react-router-dom";
 import { registerSchema } from "@/validators/registerValidator";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -28,8 +30,17 @@ export default function Register() {
 
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<any>({}); 
-
+  const errorMessage = useSelector((state: RootState) => state.auth.error);
+  const [connectionError, setConnectionError] = useState<string | null>(null) 
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (errorMessage && errorMessage !== "Aucun token trouvé") {
+      setConnectionError(errorMessage)
+    } else {
+      setConnectionError(null)
+    }
+  }, [errorMessage])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -51,18 +62,18 @@ export default function Register() {
   const handleRegister = async (e: React.FormEvent) => {
     try {
       e.preventDefault();
-
-      const { error } = registerSchema.validate({ ...formData, confirmPassword });
-
+  
+      const { error } = await registerSchema.validate({ ...formData, confirmPassword }, { abortEarly: false });
+  
       if (error) {
         const formattedErrors: any = {};
         error.details.forEach((err) => {
           formattedErrors[err.path[0]] = err.message;
         });
-        setErrors(formattedErrors);
+        setErrors(formattedErrors); 
         return;
       }
-
+  
       const response = await dispatch(register(formData));
       console.log('response', response);
       if (response?.tokens.accessToken) {
@@ -175,7 +186,7 @@ export default function Register() {
             {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
           </div>
         </div>
-
+        {connectionError && (<p className="text-red-500 text-sm mt-1">{connectionError}</p>)}
         <Button
           onClick={handleRegister}
           className="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold py-3 rounded-full hover:from-pink-600 hover:to-orange-500 transition duration-300"

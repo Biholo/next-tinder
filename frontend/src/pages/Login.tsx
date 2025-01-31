@@ -1,17 +1,29 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAppDispatch } from "@/hooks/useAppDispatch"
 import { login } from "@/redux/slices/authSlice"
 import { loginSchema } from "@/validators/loginValidator" 
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const errorMessage = useSelector((state: RootState) => state.auth.error);
+  const [connectionError, setConnectionError] = useState<string | null>(null) 
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+
+  useEffect(() => {
+    if (errorMessage && errorMessage !== "Aucun token trouvé") {
+      setConnectionError(errorMessage)
+    } else {
+      setConnectionError(null)
+    }
+  }, [errorMessage])
 
   const handleLogin = () => {
     const validation = loginSchema.validate({ email, password }, { abortEarly: false })
@@ -46,7 +58,7 @@ export default function Login() {
               className="w-full px-4 py-2 border rounded-full" 
               onChange={(e) => setEmail(e.target.value)} 
             />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>} {/* Erreur email */}
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
           <div>
             <Input 
@@ -55,8 +67,9 @@ export default function Login() {
               className="w-full px-4 py-2 border rounded-full" 
               onChange={(e) => setPassword(e.target.value)} 
             />
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>} {/* Erreur mot de passe */}
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
           </div>
+          {connectionError && (<p className="text-red-500 text-sm mt-1">{connectionError}</p>)}
           <Button 
             onClick={handleLogin}
             className="w-full bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold py-2 px-4 rounded-full hover:from-pink-600 hover:to-orange-600 transition duration-300"
