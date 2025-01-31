@@ -28,14 +28,20 @@ export const createMessage: TypedRequestHandler = async (req, res) => {
     }
 
     const message = await MessageModel.create({
-      match_id,
-      sender_id: user.id,
+      matchId: match_id,
+      senderId: user.id,
       content
     });
 
+    // Ajouter isOwnMessage pour le frontend
+    const messageWithOwnership = {
+      ...message.toObject(),
+      isOwnMessage: true
+    };
+
     return res.json({
-        message: "Message envoyé avec succès",
-        data: message
+      message: "Message envoyé avec succès",
+      data: messageWithOwnership
     });
   } catch (error) {
     console.error("Erreur lors de l'envoi du message :", error);
