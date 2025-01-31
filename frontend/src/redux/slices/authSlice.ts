@@ -1,11 +1,11 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import AuthService from "@/services/authService";
 import { api } from "@/services/interceptor";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
 
 interface AuthState {
-    user: User | null;
+    user: any | null;
     isAuthenticated: boolean;
     loading: boolean;
     error: string | null;
@@ -117,9 +117,13 @@ const authSlice = createSlice({
         resetError: (state) => {
             state.error = null;
         },
-        updateUser: (state, action: PayloadAction<User>) => {
-            state.user = action.payload;
+        updateUser: (state, action: PayloadAction<any>) => {
+            state.user = {
+                ...state.user,
+                ...action.payload
+            };
             state.isAuthenticated = true;
+
         }
     },
     extraReducers: (builder) => {

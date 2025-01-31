@@ -40,13 +40,14 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
     dispatch(updateUser({
       firstName: user?.firstName,
       lastName: user?.lastName,
-      birthDate: user?.birthDate,
-      bio: bio,
-    }))
-    onOpenChange(false)
-  }
-
-  if (!open) return null
+          // Start of Selection
+          birthDate: user?.birthDate,
+          bio: bio,
+        }))
+        onOpenChange(false)
+      }
+    
+      if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 mx-auto">

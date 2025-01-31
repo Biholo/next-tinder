@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import UserService from "@/services/userService";
 import { toast } from "react-toastify";
+import { updateUser as updateAuthUser } from "./authSlice";
 
 interface UserState {
     user: any | null;
@@ -25,9 +26,10 @@ export const getUsersToSwipe = createAsyncThunk('user/getUsersToSwipe', async (_
     }
 })
 
-export const updateUser = createAsyncThunk('user/updateUser', async (user: any, { rejectWithValue }) => {
+export const updateUser = createAsyncThunk('user/updateUser', async (user: any, { rejectWithValue, dispatch }) => {
     try {
         const response = await UserService.updateUser(user)
+        dispatch(updateAuthUser(response.data))
         return response.data
     } catch (error) {
         return rejectWithValue(error)

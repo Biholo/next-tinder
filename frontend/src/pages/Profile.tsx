@@ -1,55 +1,13 @@
 import { EditProfile } from "@/components/edit-profile-dialog/EditProfile"
+import { useAppSelector } from "@/hooks/useAppSelector"
 import { Briefcase, Check, GraduationCap, MessageCircle, Search } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { useAppSelector } from "@/hooks/useAppSelector"
-import { useDispatch } from "react-redux"
-import { updateUser } from "@/redux/slices/authSlice"
-
-interface Photo {
-  _id: string
-  photoUrl: string
-  userId: string
-}
-
-interface User {
-  _id: string
-  firstName: string
-  dateOfBirth: string
-  photos: Photo[]
-  bio?: string
-  preferences: {
-    gender: 'male' | 'female' | 'all'
-    ageRange: {
-      min: number
-      max: number
-    }
-  }
-}
 
 export default function Profile() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
     const [editDialogOpen, setEditDialogOpen] = useState(false)
     const carouselRef = useRef<HTMLDivElement>(null)
-    const dispatch = useDispatch()
     const { user } = useAppSelector((state) => state.auth)
-
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const response = await fetch('/api/auth/me', {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                })
-                const userData = await response.json()
-                dispatch(updateUser(userData))
-            } catch (error) {
-                console.error('Erreur lors de la récupération des données utilisateur:', error)
-            }
-        }
-
-        fetchUserData()
-    }, [dispatch])
 
   const handleScroll = () => {
     if (carouselRef.current) {
