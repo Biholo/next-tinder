@@ -21,7 +21,7 @@ export class WebSocketManager {
 
   constructor() {
     this.wss = new WebSocketServer({ 
-        port: 8080
+        port: 3001
      });
     this.clients = new Map();
     this.initialize();

@@ -9,13 +9,15 @@ interface AuthState {
     isAuthenticated: boolean;
     loading: boolean;
     error: string | null;
+    accessToken: string | null;
 }
 
 const initialState: AuthState = {
     user: null,
     isAuthenticated: false,
     loading: false,
-    error: null
+    error: null,
+    accessToken: null
 };
 
 
@@ -129,6 +131,7 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.isAuthenticated = true;
                 state.user = action.payload.user;
+                state.accessToken = action.payload.tokens.accessToken;
                 toast.success("Connexion réussie");
             })
             .addCase(autoLogin.rejected, (state, action) => {

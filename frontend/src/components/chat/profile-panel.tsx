@@ -11,7 +11,7 @@ export function ProfilePanel({ user }: ProfilePanelProps) {
       <div className="p-4 space-y-6">
         <div className="relative aspect-square rounded-lg overflow-hidden">
           <img
-            src={user.avatar || "/placeholder.svg"}
+            src={user.photos[0].photoUrl || "/placeholder.svg"}
             alt={`Photo de ${user.name}`}
             className="w-full h-full object-cover"
           />

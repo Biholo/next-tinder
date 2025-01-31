@@ -15,6 +15,8 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAppSelector } from './hooks/useAppSelector'
 import Loader from '@/components/loader/Loader'
+import { WebSocketService } from '@/services/websocket'
+
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAppSelector((state) => state.auth)
@@ -29,6 +31,13 @@ function App() {
   const { isAuthenticated, loading } = useAppSelector((state) => state.auth)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const { user: currentUser } = useAppSelector((state) => state.auth)
+
+  const wsService = new WebSocketService()
+
+  useEffect(() => {
+    wsService.connect(currentUser?._id || "")
+  }, [currentUser])
   
   useEffect(() => {
     dispatch(autoLogin());

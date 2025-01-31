@@ -16,7 +16,6 @@ const initialState: MatchState = {
 export const getMatches = createAsyncThunk('match/getMatches', async (_, { rejectWithValue }) => {
     try {
         const response = await MatchService.getMatches()
-        console.log('Reponse matches', response)
         return response.data
     } catch (error) {
         return rejectWithValue(error)
