@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { IUser } from '@/models/userModel';
 
 interface JwtPayload {
-  userId: string;
+  id: string;
   email: string;
 }
 
@@ -19,7 +19,7 @@ export const generateToken = (user: IUser): string => {
 
 export const verifyToken = async (token: string): Promise<JwtPayload> => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || 'kfefekfe');
     return decoded as JwtPayload;
   } catch (error) {
     throw new Error('Token invalide ou expiré');

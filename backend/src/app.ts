@@ -33,7 +33,7 @@ connect();
 app.use(rateLimit(100, 60 * 1000));
 
 // Insertion des fixtures
-insertFixtures();
+// insertFixtures();  
 
 // Utilisation des routes avec préfixes
 app.use('/api/auth', authRoutes);
@@ -60,5 +60,6 @@ server.listen(PORT, () => {
 });
 
 export const wsManager = new WebSocketManager();
+
 
 export { app, server };

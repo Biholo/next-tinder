@@ -21,7 +21,7 @@ export class WebSocketManager {
 
   constructor() {
     this.wss = new WebSocketServer({ 
-        port: 8080
+        port: 3001
      });
     this.clients = new Map();
     this.initialize();
@@ -31,18 +31,24 @@ export class WebSocketManager {
     this.wss.on('connection', async (ws: AuthenticatedWebSocket, request) => {
       try {
         // Authentification via token
+
+        console.log('🔌 Tentative de connexion WebSocket...');
         const token = request.url?.split('token=')[1];
         if (!token) {
           ws.close(1008, 'Token manquant');
           return;
         }
 
+        console.log('🔌 Token reçu:', token);
+
         const decoded = await verifyToken(token);
-        ws.userId = decoded.userId;
+        console.log('🔌 Decoded:', decoded);
+        ws.userId = decoded.id;
         ws.isAlive = true;
 
         // Ajouter le client à la map
-        this.clients.set(decoded.userId, ws);
+        this.clients.set(decoded.id, ws);
+        console.log('🔌 Client ajouté à la map:', decoded.id);
 
         // Envoyer message de bienvenue
         const connectEvent: ConnectEvent = {
@@ -98,10 +104,10 @@ export class WebSocketManager {
 
   private async handleSendMessage(ws: AuthenticatedWebSocket, event: MessageEvent) {
     const message = await MessageModel.create({
-      match_id: event.match_id,
-      sender_id: ws.userId,
+      matchId: event.match_id,
+      senderId: ws.userId,
       content: event.content,
-      created_at: new Date()
+      createdAt: new Date()
     });
 
     const messageEvent: MessageEvent = {

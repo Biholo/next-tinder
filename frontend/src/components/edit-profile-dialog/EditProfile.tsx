@@ -152,10 +152,6 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
                 </p>
               </div>
 
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Titre du poste</h2>
-                <input type="text" className="w-full p-3 border rounded-lg focus:outline-none focus:border-[#fd3a84] resize-none" />
-              </div>
 
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold">FUN FACTS</h2>

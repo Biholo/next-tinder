@@ -1,4 +1,6 @@
 import { WebSocketEvent } from '@/models/websocket';
+import Cookies from 'js-cookie';
+
 
 export class WebSocketService {
   private ws: WebSocket | null = null;
@@ -6,15 +8,20 @@ export class WebSocketService {
   private maxReconnectAttempts = 5;
   private listeners: Map<string, Function[]> = new Map();
 
-  constructor() {
-    this.initialize();
-  }
+  connect() {
+    if (this.ws?.readyState === WebSocket.OPEN) return;
 
-  private initialize() {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    
 
-    this.ws = new WebSocket(`${process.env.REACT_APP_WS_URL}?token=${token}`);
+    const token = Cookies.get('accessToken');
+
+    if (!token) {
+      console.error('Token non trouvé');
+      return;
+    }
+
+    this.ws = new WebSocket(`ws://localhost:3001?token=${token}`);
+
 
     this.ws.onopen = () => {
       console.log('WebSocket connecté');
@@ -22,8 +29,12 @@ export class WebSocketService {
     };
 
     this.ws.onmessage = (event) => {
-      const data: WebSocketEvent = JSON.parse(event.data);
-      this.notifyListeners(data.event, data);
+      try {
+        const data: WebSocketEvent = JSON.parse(event.data);
+        this.notifyListeners(data.event, data);
+      } catch (error) {
+        console.error('Erreur de parsing WebSocket:', error);
+      }
     };
 
     this.ws.onclose = () => {
@@ -45,7 +56,8 @@ export class WebSocketService {
     this.reconnectAttempts++;
     setTimeout(() => {
       console.log(`Tentative de reconnexion ${this.reconnectAttempts}...`);
-      this.initialize();
+      const userId = localStorage.getItem('userId');
+      if (userId) this.connect(userId);
     }, 5000 * this.reconnectAttempts);
   }
 
@@ -71,21 +83,27 @@ export class WebSocketService {
     callbacks?.forEach(callback => callback(data));
   }
 
-  public sendMessage(matchId: string, receiverId: string, content: string) {
-    this.send({
+  public sendMessage(matchId: string, content: string) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket non connecté');
+      return;
+    }
+
+    const message = {
       event: 'send_message',
       match_id: matchId,
-      receiver_id: receiverId,
-      content,
-      created_at: new Date().toISOString()
-    });
+      content
+    };
+
+    this.send(message);
   }
 
-  public markMessageAsRead(matchId: string, messageId: string) {
+  public markMessageAsRead(matchId: string, messageId: string, senderId: string) {
     this.send({
       event: 'message_read',
       match_id: matchId,
-      message_id: messageId
+      message_id: messageId,
+      sender_id: senderId
     });
   }
 
@@ -100,13 +118,17 @@ export class WebSocketService {
   private send(data: WebSocketEvent) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
+    } else {
+      console.error('WebSocket non connecté');
     }
   }
 
   public disconnect() {
-    this.ws?.close();
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
   }
 }
 
-// Export une instance singleton
 export const wsService = new WebSocketService(); 
