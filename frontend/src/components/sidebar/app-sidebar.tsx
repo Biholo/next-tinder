@@ -1,8 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Users, Briefcase, Shield } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import {useAppDispatch  } from "@/hooks/useAppDispatch"
+import { getMatches } from "@/redux/slices/matcheSlice"
+
 
 // Sample data
 const messages = [
@@ -90,7 +93,23 @@ const matches = [
 
 export function AppSidebar() {
   const [activeTab, setActiveTab] = useState("messages")
+  const [matchesWithMessages, setMatchesWithMessages] = useState([])
+  const [matches, setMatches] = useState([])
   const navigate = useNavigate();
+  const dispatch = useAppDispatch()
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      const initialMatches = await dispatch(getMatches())
+      console.log('initialMatches', initialMatches)
+      if(initialMatches.payload) {
+        
+        setMatches(initialMatches.payload)
+      }
+      
+    }
+    fetchMatches()
+  }, [dispatch])
 
   return (
     <div className="w-[380px] flex flex-col h-screen border-r border-gray-200">
@@ -175,7 +194,7 @@ export function AppSidebar() {
 
         {activeTab === "messages" && (
           <div className="flex flex-col">
-            {messages.map((message) => (
+            {matchesWithMessages.map((message) => (
               <div 
               key={message.id} 
               className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer"

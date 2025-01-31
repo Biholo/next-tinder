@@ -22,7 +22,7 @@ const TOKEN_EXPIRATION = "1h"; // Expiration du token d'accès
 export const register = async (req: Request, res: Response): Promise<void> => {
   const { firstName, lastName, email, password, phone, dateOfBirth, gender, roles } = req.body;
   
-  if (!firstName || !lastName || !email || !password) {
+  if (!firstName || !lastName || !email || !password || !phone || !dateOfBirth || !gender) {
     res.status(400).json({ message: "Tous les champs sont requis." });
     return;
   }
@@ -90,6 +90,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
+  console.log('email', email);
+  console.log('password', password);
 
   if (!email || !password) {
     res.status(400).json({ message: "Email et mot de passe requis." });

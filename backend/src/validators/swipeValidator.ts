@@ -6,8 +6,8 @@ export const createSwipeSchema = Joi.object({
     .messages({
       'string.empty': "L'identifiant de l'utilisateur cible est requis"
     }),
-  type: Joi.string()
-    .valid('LIKE', 'DISLIKE')
+  direction: Joi.string()
+    .valid('right', 'left')
     .required()
     .messages({
       'any.only': 'Le type doit être LIKE ou DISLIKE',

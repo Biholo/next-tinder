@@ -54,8 +54,10 @@ export const createSwipe: TypedRequestHandler = async (req, res) => {
 
     return res.json({ 
       message: "Swipe enregistré",
-      match: false,
-      swipe 
+      data: {
+        match: false,
+        swipe 
+      }
     });
   } catch (error) {
     console.error("Erreur lors de la création du swipe :", error);

@@ -34,14 +34,26 @@ class AuthService {
     }
 
     public async loginUser(user: Login): Promise<any> {
-        const response = await api.fetchRequest(`/api/auth/login`, 'POST', user);
-        console.log('login user:', response);
+        console.log('Tentative de connexion avec:', {
+            ...user,
+            password: user.password ? '[HIDDEN]' : undefined
+        });
+        
+        const response = await api.fetchRequest(`/api/auth/login`, 'POST', {
+            email: user.email,
+            password: user.password
+        });
+
+        console.log('Réponse de connexion:', {
+            ...response,
+            access_token: response.access_token ? '[TOKEN]' : undefined,
+            refresh_token: response.refresh_token ? '[TOKEN]' : undefined
+        });
+
         if (response.access_token) {
-            console.log('access_token:', response.access_token);
             Cookies.set('accessToken', response.access_token, { expires: 1 }); // expire dans 1 jour
         }
         if (response.refresh_token) {
-            console.log('refresh_token:', response.refresh_token);
             Cookies.set('refreshToken', response.refresh_token, { expires: 7 }); // expire dans 7 jours
         }
 

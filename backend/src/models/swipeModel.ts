@@ -12,7 +12,6 @@ export interface ISwipe extends Document {
 const SwipeSchema = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     targetId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    swipeType: { type: String, enum: ['LIKE', 'DISLIKE'], required: true },
     direction: { type: String, enum: ['LIKE', 'DISLIKE'], required: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },

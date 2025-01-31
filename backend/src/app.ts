@@ -12,6 +12,7 @@ import messageRoutes from '@/routes/messageRoutes';
 import authRoutes from '@/routes/authRoutes';
 import userRoutes from '@/routes/userRoutes';
 import { WebSocketManager } from '@/websocket/webSocketManager';
+import { insertFixtures } from '@/fixtures/data';
 
 dotenv.config();
 
@@ -31,7 +32,8 @@ connect();
 // Limitation des requêtes (100 requêtes par minute par IP)
 app.use(rateLimit(100, 60 * 1000));
 
-
+// Insertion des fixtures
+insertFixtures();
 
 // Utilisation des routes avec préfixes
 app.use('/api/auth', authRoutes);

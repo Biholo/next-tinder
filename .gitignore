@@ -4,3 +4,6 @@ package-lock.json
 /frontend/.env
 /frontend/package-lock.json
 /frontend/package.json
+/backend/.env
+/backend/package-lock.json
+/backend/package.json
