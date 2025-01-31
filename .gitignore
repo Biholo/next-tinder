@@ -7,3 +7,4 @@ package-lock.json
 /backend/.env
 /backend/package-lock.json
 /backend/package.json
+.DS_Store

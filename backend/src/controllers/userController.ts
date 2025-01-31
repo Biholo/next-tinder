@@ -108,18 +108,18 @@ export const getProfilesToSwipe: TypedRequestHandler = async (req, res) => {
   
   export const updateCurrentUser: TypedRequestHandler = async (req, res) => {
     try {
-      const allowedUpdates = ['bio', 'location', 'first_name', 'last_name']; // Champs modifiables
+      const allowedUpdates = ['bio', 'location', 'firstName', 'lastName']; // Champs modifiables
       const updates = Object.keys(req.body).reduce((acc, key) => {
         if (allowedUpdates.includes(key)) acc[key] = req.body[key];
         return acc;
+
       }, {} as Partial<IUser>);
   
       if (Object.keys(updates).length === 0) {
         return res.status(400).json({ message: "Aucune mise à jour valide fournie" });
       }
-  
       const user = await UserModel.findByIdAndUpdate(
-        req.user._id,
+        req.user.id,
         { $set: updates },
         { new: true, runValidators: true, select: 'first_name last_name bio location' }
       ).lean();

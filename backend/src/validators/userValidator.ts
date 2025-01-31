@@ -83,16 +83,18 @@ export const loginSchema = Joi.object({
  * Validates data when updating user information.
  */
 export const updateUserSchema = Joi.object({
-  first_name: Joi.string()
+  firstName: Joi.string()
     .min(2)
     .max(50)
     .messages({
+
       'string.min': 'Le prénom doit contenir au moins 2 caractères',
       'string.max': 'Le prénom ne peut pas dépasser 50 caractères'
     }),
-  last_name: Joi.string()
+  lastName: Joi.string()
     .min(2)
     .max(50)
+
     .messages({
       'string.min': 'Le nom doit contenir au moins 2 caractères',
       'string.max': 'Le nom ne peut pas dépasser 50 caractères'
@@ -144,16 +146,18 @@ export const updateUserPermissionsSchema = Joi.object({
  * Validator for updating current user profile
  */
 export const updateCurrentUserSchema = Joi.object({
-  first_name: Joi.string()
+  firstName: Joi.string()
     .min(2)
     .max(50)
     .messages({
+
       'string.min': 'Le prénom doit contenir au moins 2 caractères',
       'string.max': 'Le prénom ne peut pas dépasser 50 caractères'
-    }),
-  last_name: Joi.string()
+    }).optional,
+  lastName: Joi.string()
     .min(2)
     .max(50)
+
     .messages({
       'string.min': 'Le nom doit contenir au moins 2 caractères',
       'string.max': 'Le nom ne peut pas dépasser 50 caractères'
@@ -163,11 +167,12 @@ export const updateCurrentUserSchema = Joi.object({
     .messages({
       'string.max': 'La bio ne peut pas dépasser 500 caractères'
     }),
-  birth_date: Joi.date()
+  birthDate: Joi.date()
     .iso()
     .messages({
       'date.base': 'La date de naissance doit être une date valide'
     }),
+
   phone: Joi.string()
     .pattern(/^[0-9+\s-]{8,15}$/)
     .messages({
@@ -200,8 +205,19 @@ export const updateCurrentUserSchema = Joi.object({
           'number.max': "L'âge maximum ne peut pas dépasser 100 ans"
         })
     })
-  })
+  }),
+  photos: Joi.array()
+    .items(Joi.string().uri())
+    .min(1)
+    .max(9)
+    .required()
+    .messages({
+      'array.min': 'Au moins une photo est requise',
+      'array.max': 'Maximum 9 photos autorisées',
+      'string.uri': 'URL de photo invalide'
+    })
 }).min(1);
+
 
 /**
  * Validator for updating user photos
