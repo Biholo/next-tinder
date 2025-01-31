@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAppDispatch } from './hooks/useAppDispatch'
-
-import Home from '@/pages/Home'
+import 'react-toastify/dist/ReactToastify.css'
+ 
+import SwipeCards from '@/pages/SwipeCards'
 import Chat from '@/pages/Chat'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
@@ -63,7 +64,7 @@ function App() {
             <>
               <Route path="/" element={
                 <PrivateRoute>
-                  <Home />
+                  <SwipeCards />
                 </PrivateRoute>
               } />
               <Route path="/chat/:matchId" element={
