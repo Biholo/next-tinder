@@ -9,13 +9,17 @@ interface TypedRequestHandler extends RequestHandler {
 
 export const createSwipe: TypedRequestHandler = async (req, res) => {
   try {
-    const user = (req as AuthRequest).user;
-    const { target_user_id, type } = req.body;
+    const user = req.user;
+    const { target_user_id, direction } = req.body;
+
+    console.log('User: ', user)
+    console.log('Target user id: ', target_user_id)
+    console.log('Direction: ', direction)
 
     // Vérifier si un swipe existe déjà
     const existingSwipe = await SwipeModel.findOne({
-      user_id: user._id,
-      target_user_id
+      userId: user.id,
+      targetId: target_user_id
     });
 
     if (existingSwipe) {
@@ -24,23 +28,23 @@ export const createSwipe: TypedRequestHandler = async (req, res) => {
 
     // Créer le swipe
     const swipe = await SwipeModel.create({
-      user_id: user._id,
-      target_user_id,
-      type
+      userId: user.id,
+      targetId: target_user_id,
+      direction
     });
 
     // Si c'est un LIKE, vérifier s'il y a un match
-    if (type === 'LIKE') {
+    if (direction === 'LIKE') {
       const reciprocalSwipe = await SwipeModel.findOne({
-        user_id: target_user_id,
-        target_user_id: user._id,
-        type: 'LIKE'
+        userId: target_user_id,
+        targetId: user.id,
+        direction: 'LIKE'
       });
 
       if (reciprocalSwipe) {
         // Créer un match
         await MatchModel.create({
-          user1_id: user._id,
+          user1_id: user.id,
           user2_id: target_user_id
         });
 

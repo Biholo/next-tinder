@@ -63,18 +63,18 @@ class BackendApi {
         }
 
         try {
-            console.log('Request URL:', fullUrl);
-            console.log('Request options:', {
-                ...options,
-                headers: Object.fromEntries(Object.entries(options.headers || {}))
-            });
-            console.log('Request body:', body);
+            // console.log('Request URL:', fullUrl);
+            // console.log('Request options:', {
+            //     ...options,
+            //     headers: Object.fromEntries(Object.entries(options.headers || {}))
+            // });
+            // console.log('Request body:', body);
 
             let response = await fetch(fullUrl, options);
             
-            console.log('Response status:', response.status);
+            // console.log('Response status:', response.status);
             const responseData = await response.clone().json().catch(() => null);
-            console.log('Response data:', responseData);
+            // console.log('Response data:', responseData);
             
             response = await this.handleUnauthorizedRequest(response, () => 
                 this.fetchRequest(endpoint, method, body, includeAuth)

@@ -3,7 +3,6 @@ import AuthService from "@/services/authService";
 import { api } from "@/services/interceptor";
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
-import { useAuthStore } from "@/stores/authStore";
 
 interface AuthState {
     user: any | null;

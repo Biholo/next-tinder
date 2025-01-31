@@ -5,12 +5,14 @@ interface UserState {
     user: any | null;
     loading: boolean;
     error: string | null;
+    profiles: any[] | null;
 }
 
 const initialState: UserState = {
     user: null,
     loading: false,
-    error: null
+    error: null,
+    profiles: null
 }
 
 export const getUsersToSwipe = createAsyncThunk('user/getUsersToSwipe', async (_, { rejectWithValue }) => {
@@ -50,7 +52,8 @@ const userSlice = createSlice({
         })
             .addCase(getUsersToSwipe.fulfilled, (state, action) => {
             state.loading = false
-            state.user = action.payload
+            state.user = action.payload.data
+            state.profiles = action.payload?.data || []
         })
         .addCase(getUsersToSwipe.rejected, (state, action) => {
             state.loading = false
@@ -61,7 +64,7 @@ const userSlice = createSlice({
         })
         .addCase(updateUser.fulfilled, (state, action) => {
             state.loading = false
-            state.user = action.payload
+            state.user = action.payload.data
         })
         .addCase(updateUser.rejected, (state, action) => {
             state.loading = false
@@ -72,7 +75,8 @@ const userSlice = createSlice({
         })
         .addCase(addUserPhotos.fulfilled, (state, action) => {
             state.loading = false
-            state.user = action.payload
+            state.user = action.payload.data
+            
         })
         .addCase(addUserPhotos.rejected, (state, action) => {
             state.loading = false

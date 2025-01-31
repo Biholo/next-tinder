@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import UserPhotoModel from "@/models/userPhotoModel";
 
 interface CustomRequest extends Request {
   user?: { id: string };
@@ -139,12 +140,21 @@ export const getUserFromToken = async (req: CustomRequest, res: Response): Promi
   const userReq = req.user;
 
   try {
-    const user = await UserModel.findById(userReq?.id).select("-password");
+    // Convert the user document to a plain JavaScript object
+    const user = await UserModel.findById(userReq?.id).select("-password").lean();
     if (!user) {
       res.status(404).json({ message: "Utilisateur introuvable." });
       return;
     }
 
+    // Retrieve user photos
+    const userPhotos = await UserPhotoModel.find({ userId: user._id }).select("photoUrl").lean();
+    console.log('userPhotos', userPhotos);
+
+    // Append photos to the user object
+    user.photos = userPhotos.map(photo => photo.photoUrl);
+
+    console.log('user', user);
     res.status(200).json(user);
   } catch (error) {
     res.status(401).json({ message: "Token invalide ou expiré." });
