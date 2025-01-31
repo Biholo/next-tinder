@@ -12,12 +12,13 @@ import { useEffect } from 'react'
 import { autoLogin } from '@/redux/slices/authSlice'
 import { useNavigate } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import { useAppSelector } from './hooks/useAppSelector'
 import Loader from '@/components/loader/Loader'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAppSelector((state) => state.auth)
-  // const isAuthenticated = true
+
   if (!isAuthenticated) {
     return <Navigate to="/login" />
   }
@@ -46,6 +47,17 @@ function App() {
   return (
     <>
       <div className="flex w-full">
+        <ToastContainer 
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+        />
         {isAuthenticated && <AppSidebar />}
         <Routes>
           {isAuthenticated ? (
@@ -75,7 +87,6 @@ function App() {
           )}
         </Routes>
       </div>
-      <ToastContainer />
     </>
 
   )

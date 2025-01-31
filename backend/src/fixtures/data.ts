@@ -62,7 +62,7 @@ const otherUsers = Array.from({ length: 250 }, () => {
 const mainUserPhotos = Array.from({ length: 3 }, (_, index) => ({
     _id: new ObjectId(),
     userId: mainUser._id,
-    photoUrl: `https://picsum.photos/400/600?random=${index}`,
+    photoUrl: `https://picsum.photos/500/600?random=${index}`,
     createdAt: new Date(),
     updatedAt: new Date()
 }));
@@ -72,7 +72,7 @@ const otherUsersPhotos = otherUsers.flatMap(user =>
     Array.from({ length: faker.number.int({ min: 1, max: 5 }) }, (_, index) => ({
         _id: new ObjectId(),
         userId: user._id,
-        photoUrl: `https://picsum.photos/400/600?random=${user._id.toString()}${index}`,
+        photoUrl: `https://picsum.photos/500/600?random=${user._id.toString()}${index}`,
         createdAt: faker.date.past(),
         updatedAt: faker.date.recent()
     }))

@@ -19,7 +19,9 @@ export interface IUser extends Document {
   dateOfBirth: Date;
   location: string;
   bio: string;
+  photos: any[];
 }
+
 
 const UserSchema = new Schema({
   firstName: { type: String, required: true },
