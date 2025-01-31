@@ -1,11 +1,11 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import AuthService from "@/services/authService";
 import { api } from "@/services/interceptor";
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
 
 interface AuthState {
-    user: any | null;
+    user: User | null;
     isAuthenticated: boolean;
     loading: boolean;
     error: string | null;
@@ -116,6 +116,10 @@ const authSlice = createSlice({
     reducers: {
         resetError: (state) => {
             state.error = null;
+        },
+        updateUser: (state, action: PayloadAction<User>) => {
+            state.user = action.payload;
+            state.isAuthenticated = true;
         }
     },
     extraReducers: (builder) => {
@@ -136,7 +140,6 @@ const authSlice = createSlice({
                 state.error = action.payload as string;
                 state.isAuthenticated = false;
                 state.user = null;
-                toast.error(state.error);
             })
             // Login
             .addCase(login.pending, (state) => {
@@ -147,7 +150,7 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.isAuthenticated = true;
                 state.user = action.payload.user;
-                toast.success("");
+                toast.success("Connexion réussie");
             })
             .addCase(login.rejected, (state, action) => {
                 state.loading = false;
@@ -180,5 +183,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { resetError } = authSlice.actions;
+export const { resetError, updateUser } = authSlice.actions;
 export default authSlice.reducer;

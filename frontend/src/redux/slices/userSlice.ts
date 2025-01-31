@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import UserService from "@/services/userService";
+import { toast } from "react-toastify";
 
 interface UserState {
     user: any | null;
@@ -50,7 +51,7 @@ const userSlice = createSlice({
         builder.addCase(getUsersToSwipe.pending, (state) => {
             state.loading = true
         })
-            .addCase(getUsersToSwipe.fulfilled, (state, action) => {
+        .addCase(getUsersToSwipe.fulfilled, (state, action) => {
             state.loading = false
             state.user = action.payload.data
             state.profiles = action.payload?.data || []
@@ -64,7 +65,7 @@ const userSlice = createSlice({
         })
         .addCase(updateUser.fulfilled, (state, action) => {
             state.loading = false
-            state.user = action.payload.data
+            toast.success("Profil mis à jour avec succès")
         })
         .addCase(updateUser.rejected, (state, action) => {
             state.loading = false

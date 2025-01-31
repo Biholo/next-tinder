@@ -18,7 +18,6 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
 
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  // Fermer le dialogue en cliquant en dehors
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
@@ -44,6 +43,7 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
       birthDate: user?.birthDate,
       bio: bio,
     }))
+    onOpenChange(false)
   }
 
   if (!open) return null
