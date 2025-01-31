@@ -1,12 +1,9 @@
 import { Request, Response, RequestHandler } from "express";
 import UserModel from "@/models/userModel";
 import { IUser } from '@/models/userModel';
-import { IMatch } from '../models/matchModel';
-import { ISwipe } from '../models/swipeModel';
 import SwipeModel from "@/models/swipeModel";
 import MatchModel from "@/models/matchModel";
 import { AuthRequest } from "@/types/auth";
-import { IUserPhoto } from "@/models/userPhotoModel";
 import UserPhotoModel from "@/models/userPhotoModel";
 
 interface IUserWithPreferences extends IUser {

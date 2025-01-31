@@ -43,7 +43,20 @@ export const registerSchema = Joi.object({
     .messages({
       'array.base': 'Les rôles doivent être un tableau',
       'any.only': 'Rôles invalides'
-    })
+    }),
+  phone: Joi.string().optional(),
+  profilePictureUrl: Joi.string().uri().optional(),
+  gender: Joi.string().valid('male', 'female', 'other').optional(),
+  dateOfBirth: Joi.date().iso().optional(),
+  location: Joi.string().optional(),
+  bio: Joi.string().optional(),
+  preferences: Joi.object({
+    gender: Joi.string().valid('male', 'female', 'both').optional(),
+    ageRange: Joi.object({
+      min: Joi.number().integer().min(18).max(100).optional(),
+      max: Joi.number().integer().min(18).max(100).optional()
+    }).optional()
+  }).optional()
 });
 
 /**
