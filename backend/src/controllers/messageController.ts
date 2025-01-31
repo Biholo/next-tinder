@@ -31,7 +31,10 @@ export const createMessage: TypedRequestHandler = async (req, res) => {
       content
     });
 
-    return res.json(message);
+    return res.json({
+        message: "Message envoyé avec succès",
+        data: message
+    });
   } catch (error) {
     console.error("Erreur lors de l'envoi du message :", error);
     return res.status(500).json({ message: "Erreur lors de l'envoi du message" });
@@ -61,7 +64,10 @@ export const getMatchMessages: TypedRequestHandler = async (req, res) => {
       .populate('sender_id', 'first_name last_name')
       .lean();
 
-    return res.json(messages);
+    return res.json({
+        message: "Messages récupérés avec succès",
+        data: messages
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération des messages :", error);
     return res.status(500).json({ message: "Erreur lors de la récupération des messages" });

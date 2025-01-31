@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import type { Match, Message, User } from '@/models/chat'
+import MessageService from '@/services/messageService'
+import { createAsyncThunk } from '@reduxjs/toolkit'
 
 interface ChatState {
   currentUser: User | null
@@ -23,8 +25,17 @@ const initialState: ChatState = {
   error: null
 }
 
+export const getMessages = createAsyncThunk('message/getMessages', async (matchId: string, { rejectWithValue }) => {
+  try {
+    const response = await MessageService.getMessages(matchId)
+    return response.data
+  } catch (error) {
+    return rejectWithValue(error)
+  }
+})
+
 export const chatSlice = createSlice({
-  name: 'chat',
+  name: 'message',
   initialState,
   reducers: {
     setSelectedMatch: (state, action: PayloadAction<string>) => {

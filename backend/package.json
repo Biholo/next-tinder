@@ -5,7 +5,8 @@
     "scripts": {
         "dev": "nodemon -r tsconfig-paths/register src/app.ts",
         "build": "tsc",
-        "start": "node -r module-alias/register dist/app.js"
+        "start": "node -r module-alias/register dist/app.js",
+        "fixtures": "ts-node -r tsconfig-paths/register src/fixtures/run-fixtures.ts"
     },
     "author": "",
     "license": "ISC",
@@ -27,6 +28,7 @@
         "ws": "^8.18.0"
     },
     "devDependencies": {
+        "@faker-js/faker": "^9.4.0",
         "@types/cors": "^2.8.17",
         "@types/express": "^5.0.0",
         "@types/node": "^22.10.2",

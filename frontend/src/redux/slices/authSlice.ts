@@ -61,13 +61,17 @@ export const login = createAsyncThunk(
     async (credentials: { email: string; password: string }, { rejectWithValue }) => {
         try {
             const response = await new AuthService().loginUser(credentials);
+            if (!response.access_token) {
+                throw new Error('Token non reçu du serveur');
+            }
             const user = await new AuthService().getUserByToken(response.access_token);
             return { user, tokens: { 
                 accessToken: response.access_token, 
                 refreshToken: response.refresh_token 
             }};
         } catch (error: any) {
-            return rejectWithValue(error.message);
+            console.error('Login error:', error);
+            return rejectWithValue(error.message || 'Erreur lors de la connexion');
         }
     }
 );
@@ -109,12 +113,7 @@ export const logout = createAsyncThunk(
 
 const authSlice = createSlice({
     name: "auth",
-    initialState: {
-        isAuthenticated: false,
-        user: null,
-        loading: false,
-        error: null
-    },
+    initialState,
     reducers: {
         resetError: (state) => {
             state.error = null;
@@ -154,7 +153,7 @@ const authSlice = createSlice({
             .addCase(login.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
-                toast.error(state.error);
+                toast.error(state.error || 'Erreur lors de la connexion');
             })
             // Register
             .addCase(register.pending, (state) => {

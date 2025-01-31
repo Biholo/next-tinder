@@ -1,5 +1,6 @@
 import { Request, RequestHandler, Response } from "express";
 import MatchModel from "@/models/matchModel";
+import MessageModel from "@/models/messageModel";
 import { AuthRequest } from "@/types/auth";
 
 interface TypedRequestHandler extends RequestHandler {
@@ -20,7 +21,32 @@ export const getMatches: TypedRequestHandler = async (req, res) => {
     .populate('user2_id', 'first_name last_name photos')
     .lean();
 
-    return res.json(matches);
+    // Récupérer le dernier message pour chaque match
+    const matchesWithLastMessage = await Promise.all(matches.map(async (match) => {
+      const lastMessage = await MessageModel.findOne({
+        match_id: match._id
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+      // Déterminer l'autre utilisateur
+      // @ts-ignore
+      const otherUser = match.user1_id._id.toString() === user._id.toString() 
+        ? match.user2_id 
+        : match.user1_id;
+
+      return {
+        match_id: match._id,
+        user: otherUser,
+        lastMessage: lastMessage || null,
+        createdAt: match.createdAt
+      };
+    }));
+
+    return res.json({
+        message: "Matchs récupérés avec succès",
+        data: matchesWithLastMessage
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération des matchs :", error);
     return res.status(500).json({ message: "Erreur lors de la récupération des matchs" });

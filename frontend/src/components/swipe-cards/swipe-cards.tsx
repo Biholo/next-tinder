@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react"
 import TinderCard from "react-tinder-card"
 import { Heart, Star, X, ChevronDown, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
+import { useAppDispatch } from "@/hooks/useAppDispatch"
+import { getUsersToSwipe } from "@/redux/slices/userSlice"
+import { createSwipe } from "@/redux/slices/swipeSlice"
 interface Profile {
   id: number
   name: string
@@ -15,44 +17,44 @@ interface Profile {
   preferences: string[]
 }
 
-const profiles: Profile[] = [
-  {
-    id: 1,
-    name: "Alice",
-    age: 28,
-    imgs: [
-      "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      "https://images.unsplash.com/photo-1517365830460-955ce3ccd263?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    ],
-    bio: "Aventurière passionnée, toujours prête pour de nouvelles expériences !",
-    mood: "Je sais pas trop",
-    preferences: ["La monogamie", "Les voyages", "La cuisine"],
-  },
-  {
-    id: 2,
-    name: "Bob",
-    age: 32,
-    imgs: [
-      "https://images.unsplash.com/photo-1517849845537-4d257902454a?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    ],
-    bio: "Amoureux des animaux et de la nature. Cherche une âme sœur pour partager mes passions.",
-    mood: "Ouvert à tout",
-    preferences: ["Les animaux", "Le plein air", "La photographie"],
-  },
-  {
-    id: 3,
-    name: "Charlie",
-    age: 25,
-    imgs: [
-      "https://images.unsplash.com/photo-1523626752472-b55a628f1acc?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDIxfHx8ZW58MHx8fHx8",
-      "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    ],
-    bio: "Artiste dans l'âme, je cherche quelqu'un pour partager ma créativité et mon amour pour l'art.",
-    mood: "Créatif et inspiré",
-    preferences: ["L'art", "La musique", "Les expositions"],
-  },
-]
+// const profiles: Profile[] = [
+//   {
+//     id: 1,
+//     name: "Alice",
+//     age: 28,
+//     imgs: [
+//       "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+//       "https://images.unsplash.com/photo-1517365830460-955ce3ccd263?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+//     ],
+//     bio: "Aventurière passionnée, toujours prête pour de nouvelles expériences !",
+//     mood: "Je sais pas trop",
+//     preferences: ["La monogamie", "Les voyages", "La cuisine"],
+//   },
+//   {
+//     id: 2,
+//     name: "Bob",
+//     age: 32,
+//     imgs: [
+//       "https://images.unsplash.com/photo-1517849845537-4d257902454a?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+//       "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+//     ],
+//     bio: "Amoureux des animaux et de la nature. Cherche une âme sœur pour partager mes passions.",
+//     mood: "Ouvert à tout",
+//     preferences: ["Les animaux", "Le plein air", "La photographie"],
+//   },
+//   {
+//     id: 3,
+//     name: "Charlie",
+//     age: 25,
+//     imgs: [
+//       "https://images.unsplash.com/photo-1523626752472-b55a628f1acc?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDIxfHx8ZW58MHx8fHx8",
+//       "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+//     ],
+//     bio: "Artiste dans l'âme, je cherche quelqu'un pour partager ma créativité et mon amour pour l'art.",
+//     mood: "Créatif et inspiré",
+//     preferences: ["L'art", "La musique", "Les expositions"],
+//   },
+// ]
 
 type Direction = "left" | "right" | "up"
 
@@ -61,6 +63,8 @@ export default function ProfileCard() {
   const [profileIndex, setProfileIndex] = useState(0)
   const [imageIndex, setImageIndex] = useState(0)
   const [isContentVisible, setIsContentVisible] = useState(false)
+  const [profiles, setProfiles] = useState<Profile[]>([])
+  const dispatch = useAppDispatch()
   
   const currentProfiles = profiles.slice(profileIndex)
   
@@ -68,6 +72,14 @@ export default function ProfileCard() {
     swipe: (dir: Direction) => void
   }
   const cardRefs = useRef<(TinderCardRef | null)[]>([])
+
+  useEffect(() => {
+    const response = dispatch(getUsersToSwipe())
+
+    if (response.payload) {
+      setProfiles(response.payload)
+    }
+  }, [dispatch])
 
   useEffect(() => {
     cardRefs.current = new Array(currentProfiles.length).fill(null)
@@ -102,15 +114,29 @@ export default function ProfileCard() {
     
     if (currentCard) {
       currentCard.swipe(direction)
+      if(direction === "right") {
+        dispatch(createSwipe({
+          target_user_id: profiles[profileIndex].id,
+          direction: "right"
+        }))
+      }
+      else if(direction === "left") {
+        dispatch(createSwipe({
+          target_user_id: profiles[profileIndex].id,
+          direction: "left"
+        }))
+      }
     }
   }
 
   const onSwipe = (direction: Direction, name: string) => {
     console.log(`${name} a été swipé ${direction}`)
     setLastDirection(direction)
-    setProfileIndex((prev) => prev + 1)
+    setProfileIndex((prev: number) => prev + 1)
     setImageIndex(0)
     setIsContentVisible(false)
+
+    
   }
 
   const onCardLeftScreen = (name: string) => {
@@ -122,11 +148,11 @@ export default function ProfileCard() {
   }
 
   const nextImage = () => {
-    setImageIndex((prev) => (prev + 1) % profiles[profileIndex].imgs.length)
+    setImageIndex((prev: number) => (prev + 1) % profiles[profileIndex].imgs.length)
   }
 
   const prevImage = () => {
-    setImageIndex((prev) => (prev - 1 + profiles[profileIndex].imgs.length) % profiles[profileIndex].imgs.length)
+    setImageIndex((prev: number) => (prev - 1 + profiles[profileIndex].imgs.length) % profiles[profileIndex].imgs.length)
   }
 
   return (
@@ -135,11 +161,11 @@ export default function ProfileCard() {
     >
       <div className="flex-1 overflow-hidden relative">
         <div className="relative h-[calc(100vh-100px)]">
-          {currentProfiles.map((profile, index) => (
+          {currentProfiles.map((profile: Profile, index: number) => (
             <TinderCard
               key={profile.id}
-              ref={(el) => (cardRefs.current[index] = el)}
-              onSwipe={(dir) => onSwipe(dir as Direction, profile.name)}
+              ref={(el: TinderCardRef | null) => (cardRefs.current[index] = el)}
+              onSwipe={(dir: Direction) => onSwipe(dir, profile.name)}
               onCardLeftScreen={() => onCardLeftScreen(profile.name)}
               preventSwipe={["down"]}
               className={`absolute w-[45vw] h-[calc(100vh-120px)] left-[27.5vw] top-[20px]`}
@@ -208,7 +234,7 @@ export default function ProfileCard() {
           <div className="space-y-2">
             <h2 className="font-medium">Préférences</h2>
             <div className="flex flex-wrap gap-2">
-              {profiles[profileIndex]?.preferences.map((pref, index) => (
+              {profiles[profileIndex]?.preferences.map((pref: string, index: number) => (
                 <span key={index} className="px-3 py-1 bg-gray-100 rounded-full text-sm">
                   {pref}
                 </span>

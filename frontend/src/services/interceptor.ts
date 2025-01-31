@@ -62,26 +62,44 @@ class BackendApi {
             options.body = isFormData ? body : JSON.stringify(body);
         }
 
-        let response = await fetch(fullUrl, options);
-        
-        response = await this.handleUnauthorizedRequest(response, () => 
-            this.fetchRequest(endpoint, method, body, includeAuth)
-        );
+        try {
+            console.log('Request URL:', fullUrl);
+            console.log('Request options:', {
+                ...options,
+                headers: Object.fromEntries(Object.entries(options.headers || {}))
+            });
+            console.log('Request body:', body);
 
-        if (!response.ok) {
-            throw new Error(`${method} request failed: ${response.statusText}`);
+            let response = await fetch(fullUrl, options);
+            
+            console.log('Response status:', response.status);
+            const responseData = await response.clone().json().catch(() => null);
+            console.log('Response data:', responseData);
+            
+            response = await this.handleUnauthorizedRequest(response, () => 
+                this.fetchRequest(endpoint, method, body, includeAuth)
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Response error:', errorData);
+                throw new Error(errorData.message || `${method} request failed: ${response.statusText}`);
+            }
+
+            if(method === 'DELETE' && response.status === 204) {
+                return { success: true };
+            }
+
+            return response.json();
+        } catch (error: any) {
+            console.error('Request error:', error);
+            throw new Error(error.message || 'Une erreur est survenue lors de la requête');
         }
-
-        if(method === 'DELETE' && response.status === 204) {
-            return { success: true };
-        }
-
-        return response.json();
     }
 
     // Récupération d'un nouveau token via le refresh token
     public async getNewAccessToken(refresh_token: string): Promise<any> {
-        const response = await this.fetchRequest('/api/token/refresh', 'POST', { refresh_token });
+        const response = await this.fetchRequest('/api/auth/refresh', 'POST', { token: refresh_token });
 
         if (response.token) {
             Cookies.set('accessToken', response.token, { expires: 1 }); // expire dans 1 jour
