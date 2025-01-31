@@ -5,6 +5,7 @@ import SwipeModel from "@/models/swipeModel";
 import MatchModel from "@/models/matchModel";
 import { AuthRequest } from "@/types/auth";
 import UserPhotoModel from "@/models/userPhotoModel";
+import { ObjectId } from "mongodb";
 
 interface IUserWithPreferences extends IUser {
   preferences: {
@@ -22,40 +23,41 @@ interface TypedRequestHandler extends RequestHandler {
 
 export const getProfilesToSwipe: TypedRequestHandler = async (req, res) => {
     try {
-      const currentUser = (req as AuthRequest).user as IUserWithPreferences;
+      const currentUser = req.user
       if (!currentUser) {
         return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
   
       // Récupérer les IDs des utilisateurs déjà swipés
       const swipedUsers = await SwipeModel.find({ 
-        user_id: currentUser._id 
-      }).distinct('target_user_id');
+        userId: currentUser.id 
+      }).distinct('targetId');
   
       // Récupérer les IDs des matchs existants
       const matches = await MatchModel.find({
         $or: [
-          { user1_id: currentUser._id },
-          { user2_id: currentUser._id }
+          { user1_id: currentUser.id },
+          { user2_id: currentUser.id }
         ]
       }).lean();
   
       const matchedUserIds = matches.map(match => 
-        //@ts-ignore
-        match.user1_id.toString() === currentUser._id.toString() 
+        match.user1_id.toString() === currentUser.id.toString() 
           ? match.user2_id 
           : match.user1_id
       );
   
       // Exclure l'utilisateur actuel, les utilisateurs swipés et les matchs
       const excludedIds = [
-        currentUser._id,
+        currentUser.id,
         ...swipedUsers,
         ...matchedUserIds
-      ];
+      ].map(id => new ObjectId(id));
   
       // Construire la requête en fonction des préférences de l'utilisateur
-      const query: Record<string, any> = { _id: { $nin: excludedIds } };
+      const query: Record<string, any> = { 
+        _id: { $nin: excludedIds }
+      };
   
       if (currentUser.preferences?.gender && currentUser.preferences.gender !== 'both') {
         query.gender = currentUser.preferences.gender;
@@ -66,20 +68,20 @@ export const getProfilesToSwipe: TypedRequestHandler = async (req, res) => {
         const minDate = new Date(today.getFullYear() - currentUser.preferences.ageRange.max, today.getMonth(), today.getDate());
         const maxDate = new Date(today.getFullYear() - currentUser.preferences.ageRange.min, today.getMonth(), today.getDate());
   
-        query.birth_date = { $gte: minDate, $lte: maxDate };
+        query.dateOfBirth = { $gte: minDate, $lte: maxDate };
       }
   
-      const limit = Number(req.query.limit) || 10; // Permettre une pagination
+      const limit = Number(req.query.limit) || 10;
       const profiles = await UserModel.find(query)
-        .select('firstName lastName bio gender dateOfBirth location preferences photos')
+        .select('firstName lastName bio gender dateOfBirth location preferences')
         .limit(limit)
         .lean();
 
-    // Récupérer les photos de chaque profil
-    const profilesWithPhotos = await Promise.all(profiles.map(async (profile) => {
-      const photos = await UserPhotoModel.find({ userId: profile._id }).select('photoUrl').lean();
-      return { ...profile, photos };
-    }));
+      // Récupérer les photos de chaque profil
+      const profilesWithPhotos = await Promise.all(profiles.map(async (profile) => {
+        const photos = await UserPhotoModel.find({ userId: profile._id }).select('photoUrl').lean();
+        return { ...profile, photos };
+      }));
 
       // Calculer l'âge pour chaque profil
       const profilesWithAge = profilesWithPhotos.map(profile => {
@@ -90,11 +92,9 @@ export const getProfilesToSwipe: TypedRequestHandler = async (req, res) => {
         return {
           ...profile,
           age,
-          birth_date: undefined // On ne renvoie pas la date de naissance directement
+          dateOfBirth: undefined // On ne renvoie pas la date de naissance directement
         };
       });
-
-      
 
       return res.json({
         message: "Profils récupérés avec succès",
