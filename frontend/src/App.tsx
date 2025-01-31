@@ -15,8 +15,7 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAppSelector } from './hooks/useAppSelector'
 import Loader from '@/components/loader/Loader'
-import { WebSocketService } from '@/services/websocket'
-
+import { wsService } from '@/services/websocket'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAppSelector((state) => state.auth)
@@ -33,20 +32,33 @@ function App() {
   const navigate = useNavigate()
   const { user: currentUser } = useAppSelector((state) => state.auth)
 
-  const wsService = new WebSocketService()
-
+  // Gestion de la connexion WebSocket
   useEffect(() => {
-    wsService.connect(currentUser?._id || "")
-  }, [currentUser])
-  
-  useEffect(() => {
-    dispatch(autoLogin());
+    if (currentUser?._id && isAuthenticated) {
+      console.log('🔌 Tentative de connexion WebSocket...');
+      wsService.connect();
 
-    if (isAuthenticated) {
-      navigate('/');
-    } else {
-      navigate('/login');
+      return () => {
+        console.log('👋 Déconnexion WebSocket...');
+        wsService.disconnect();
+      };
     }
+  }, [currentUser?._id, isAuthenticated]);
+  
+  // Gestion de l'auto-login
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        await dispatch(autoLogin());
+        if (isAuthenticated) {
+          navigate('/');
+        }
+      } catch (error) {
+        navigate('/login');
+      }
+    };
+
+    initAuth();
   }, []);
 
   if (loading) {
@@ -97,7 +109,6 @@ function App() {
         </Routes>
       </div>
     </>
-
   )
 }
 

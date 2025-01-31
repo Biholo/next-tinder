@@ -29,10 +29,8 @@ export default function ChatPage() {
   // Connexion WebSocket et gestion des événements
   useEffect(() => {
     if (currentUser?._id) {
-      // Connexion au WebSocket
       wsService.connect(currentUser._id);
 
-      // Écouter les nouveaux messages
       const handleNewMessage = (data: any) => {
         if (data.match_id === matchId) {
           const newMessage: Message = {
@@ -45,10 +43,8 @@ export default function ChatPage() {
         }
       };
 
-      // Écouter les confirmations de lecture
       const handleMessageRead = (data: any) => {
         if (data.match_id === matchId) {
-          // Mettre à jour l'état des messages lus
           console.log('Message lu:', data);
         }
       };
@@ -64,7 +60,6 @@ export default function ChatPage() {
     }
   }, [currentUser?._id, matchId]);
 
-  // Chargement initial des messages
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -92,14 +87,14 @@ export default function ChatPage() {
     wsService.sendMessage(matchId, content);
 
     // Optimistic update
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content,
-      timestamp: new Date(),
-      senderId: currentUser?._id || "",
-    };
+    // const newMessage: Message = {
+    //   id: Date.now().toString(),
+    //   content,
+    //   timestamp: new Date(),
+    //   senderId: currentUser?._id || "",
+    // };
     
-    setMessages(prev => [...prev, newMessage]);
+    // setMessages(prev => [...prev, newMessage]);
   };
 
   if (!matchId) {

@@ -11,6 +11,8 @@ export class WebSocketService {
   connect() {
     if (this.ws?.readyState === WebSocket.OPEN) return;
 
+    
+
     const token = Cookies.get('accessToken');
 
     if (!token) {
@@ -18,7 +20,7 @@ export class WebSocketService {
       return;
     }
 
-    this.ws = new WebSocket(`ws://localhost:3001`);
+    this.ws = new WebSocket(`ws://localhost:3001?token=${token}`);
 
 
     this.ws.onopen = () => {
