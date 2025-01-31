@@ -56,7 +56,7 @@ export function AppSidebar() {
             className="w-8 h-8 rounded-full bg-gray-300 overflow-hidden">
             {user?.photos && user.photos[0] ? (
               <img
-                src={user.photos[0].photoUrl}
+                src={user.photos[0]}
                 alt={`Photo de ${user.firstName}`}
                 className="w-full h-full object-cover"
               />

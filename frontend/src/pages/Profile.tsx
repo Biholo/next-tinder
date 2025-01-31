@@ -151,7 +151,7 @@ export default function Profile() {
                 <button className="w-full bg-[#fd3a84] text-white rounded-full py-3 px-6 flex items-center justify-between" onClick={() => setEditDialogOpen(!editDialogOpen)}>
                     <span>Modifier vos informations</span>
                     <span className="text-sm">(Complété à 74 %)</span>
-                    </button>
+                </button>
             </div>
             <EditProfile open={editDialogOpen} onOpenChange={setEditDialogOpen} />
         </div>

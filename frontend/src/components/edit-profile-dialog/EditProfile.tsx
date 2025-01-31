@@ -1,5 +1,6 @@
-"use client"
-
+import { useAppDispatch } from "@/hooks/useAppDispatch"
+import { useAppSelector } from "@/hooks/useAppSelector"
+import { updateUser } from "@/redux/slices/userSlice"
 import { Plus, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
@@ -11,12 +12,9 @@ interface EditProfileProps {
 export function EditProfile({ open, onOpenChange }: EditProfileProps) {
   const [activeTab, setActiveTab] = useState<"modifier" | "apercu">("modifier")
   const [smartPhotos, setSmartPhotos] = useState(false)
-  const [photos, setPhotos] = useState<string[]>([
-    "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1517849845537-4d257902454a?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDIxfHx8ZW58MHx8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1523626752472-b55a628f1acc?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDIxfHx8ZW58MHx8fHx8",
-    "https://images.unsplash.com/photo-1523626752472-b55a628f1acc?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDIxfHx8ZW58MHx8fHx8",
-  ])
+  const { user } = useAppSelector((state) => state.auth)
+  const [bio, setBio] = useState(user?.bio)
+  const dispatch = useAppDispatch()
 
   const dialogRef = useRef<HTMLDivElement>(null)
 
@@ -39,12 +37,13 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
     }
   }, [open, onOpenChange])
 
-  const removePhoto = (index: number) => {
-    setPhotos(photos.filter((_, i) => i !== index))
-  }
-
-  const addPhoto = (newPhoto: string) => {
-    setPhotos([...photos, newPhoto])
+  const handleSave = () => {
+    dispatch(updateUser({
+      firstName: user?.firstName,
+      lastName: user?.lastName,
+      birthDate: user?.birthDate,
+      bio: bio,
+    }))
   }
 
   if (!open) return null
@@ -82,31 +81,29 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
               <div>
                 <h2 className="text-lg font-semibold mb-4">PHOTOS DE PROFIL</h2>
                 <div className="grid grid-cols-3 gap-2">
-                  {photos.map((photo, index) => (
+                  {user?.photos.map((photo: string, index: number) => (
                     <div key={index} className="relative aspect-square">
                       <img
                         src={photo || "/placeholder.svg"}
+
                         alt={`Photo ${index + 1}`}
                         className="w-full h-full object-cover rounded-lg"
                       />
                       <button
-                        onClick={() => removePhoto(index)}
+                        onClick={() => {}}
                         className="absolute top-1 right-1 bg-black/50 rounded-full p-1"
                       >
                         <X className="w-4 h-4 text-white" />
                       </button>
                     </div>
                   ))}
-                  {Array.from({ length: Math.max(0, 9 - photos.length) }).map((_, index) => (
+                  {Array.from({ length: Math.max(0, 9 - user?.photos.length) }).map((_, index) => (
                     <div
                       key={`empty-${index}`}
                       className="aspect-square border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:border-[#fd3a84] transition-colors"
                       onClick={() => {
                         // Logique pour ajouter une nouvelle photo
-                        const newPhotoUrl = prompt("Entrez l'URL de la nouvelle photo:")
-                        if (newPhotoUrl) {
-                          addPhoto(newPhotoUrl)
-                        }
+                        prompt("Entrez l'URL de la nouvelle photo:")
                       }}
                     >
                       <Plus className="w-8 h-8 text-[#fd3a84]" />
@@ -142,11 +139,13 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold">À PROPOS DE KILIAN</h2>
                 <textarea
-                  defaultValue="Passionné par le cinéma (Inception meilleur film) Sombre passé sur League"
+                  defaultValue={user?.bio}
                   className="w-full min-h-[100px] p-3 border rounded-lg focus:outline-none focus:border-[#fd3a84] resize-none"
+                  onChange={(e) => setBio(e.target.value)}
                 />
-                <p className="text-right text-sm text-gray-500">426</p>
+                <p className="text-right text-sm text-gray-500">{200 - bio?.length}</p>
                 <p className="text-sm text-gray-500">
+
                   N&apos;incluez pas de pseudos de médias sociaux ou d&apos;autres informations de contact dans votre
                   profil.
                 </p>
@@ -168,7 +167,7 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
                 </div>
               </div>
 
-              <button className="w-full bg-[#fd3a84] text-white rounded-full py-3 font-medium hover:bg-[#fd3a84]/90 transition-colors">
+              <button className="w-full bg-[#fd3a84] text-white rounded-full py-3 font-medium hover:bg-[#fd3a84]/90 transition-colors" onClick={() => handleSave()}>
                 Enregistrer
               </button>
             </div>
@@ -179,10 +178,11 @@ export function EditProfile({ open, onOpenChange }: EditProfileProps) {
               <h2 className="text-lg font-semibold">Aperçu de votre profil</h2>
               {/* Aperçu des photos */}
               <div className="grid grid-cols-3 gap-2">
-                {photos.map((photo, index) => (
+                {user?.photos.map((photo: string, index: number) => (
                   <div key={index} className="aspect-square">
                     <img
                       src={photo || "/placeholder.svg"}
+
                       alt={`Aperçu Photo ${index + 1}`}
                       className="w-full h-full object-cover rounded-lg"
                     />
