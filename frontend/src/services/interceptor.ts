@@ -1,4 +1,5 @@
 import Cookies from 'js-cookie';
+import { AuthResponse } from '@/models/auth.types';
 
 class BackendApi {
     private url: string;
@@ -35,7 +36,7 @@ class BackendApi {
             if (refreshToken) {
                 const newToken = await this.getNewAccessToken(refreshToken);
                 
-                if (newToken && newToken.token) {
+                if (newToken && newToken.access_token) {
                     return retryRequest();
                 }
             }
@@ -73,7 +74,7 @@ class BackendApi {
             let response = await fetch(fullUrl, options);
             
             // console.log('Response status:', response.status);
-            const responseData = await response.clone().json().catch(() => null);
+            // const responseData = await response.clone().json().catch(() => null);
             // console.log('Response data:', responseData);
             
             response = await this.handleUnauthorizedRequest(response, () => 
@@ -98,7 +99,7 @@ class BackendApi {
     }
 
     // Récupération d'un nouveau token via le refresh token
-    public async getNewAccessToken(refresh_token: string): Promise<any> {
+    public async getNewAccessToken(refresh_token: string): Promise<AuthResponse | null> {
         const response = await this.fetchRequest('/api/auth/refresh', 'POST', { token: refresh_token });
 
         if (response.token) {
