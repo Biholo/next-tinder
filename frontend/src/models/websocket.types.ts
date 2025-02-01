@@ -1,9 +1,4 @@
-export interface WebSocketEvent {
-    event: WebSocketEventType;
-    [key: string]: any;
-  }
-  
-  export type WebSocketEventType = 
+export type WebSocketEventType = 
     | 'connect'
     | 'disconnect'
     | 'send_message'
@@ -14,38 +9,43 @@ export interface WebSocketEvent {
     | 'user_typing'
     | 'user_typing_display'
     | 'notification';
-  
-  export interface Message {
+
+export interface WebSocketEvent {
+    event: WebSocketEventType;
+    [key: string]: any;
+}
+
+export interface WebSocketMessage {
     match_id: string;
     sender_id: string;
     receiver_id: string;
     content: string;
     message_id?: string;
     created_at: string;
-  }
-  
-  export interface MessageRead {
+}
+
+export interface MessageRead {
     match_id: string;
     message_id: string;
     reader_id: string;
-  }
-  
-  export interface NewMatch {
+}
+
+export interface NewMatch {
     match_id: string;
     user_id: string;
     first_name: string;
     photo: string;
     created_at: string;
-  }
-  
-  export interface UserTyping {
+}
+
+export interface UserTyping {
     match_id: string;
     sender_id: string;
-  }
-  
-  export interface Notification {
+}
+
+export interface WebSocketNotification {
     type: 'message' | 'match';
     message: string;
     data: any;
     created_at: string;
-  }
+}
