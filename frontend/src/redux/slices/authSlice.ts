@@ -30,7 +30,7 @@ export const autoLogin = createAsyncThunk(
             const refreshToken = Cookies.get('refreshToken');
 
             if (!accessToken && !refreshToken) {
-                return rejectWithValue('Aucun token trouvé');
+                return rejectWithValue('');
             }
 
             if (accessToken) {

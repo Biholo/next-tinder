@@ -55,11 +55,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       // preferences: preferences
     });
 
-    console.log('newUser', newUser);
-    console.log('ACCESS_TOKEN_SECRET', ACCESS_TOKEN_SECRET);
-    console.log('REFRESH_TOKEN_SECRET', REFRESH_TOKEN_SECRET);
-    console.log('TOKEN_EXPIRATION', TOKEN_EXPIRATION);
-
     // Générer les tokens
     const accessToken = jwt.sign(
       { id: newUser._id, roles: newUser.roles },
@@ -67,16 +62,19 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       { expiresIn: TOKEN_EXPIRATION }
     );
 
-    console.log('accessToken', accessToken);
 
     const refreshToken = jwt.sign({ id: newUser._id }, REFRESH_TOKEN_SECRET);
 
-    console.log('refreshToken', refreshToken);
+    // Enregistrer la photo de profil de l'utilisateur
+    const userPhoto = new UserPhotoModel({
+      userId: newUser._id,
+      photoUrl: `https://picsum.photos/400/600?random=${newUser._id}`
+    });
+    await userPhoto.save();
+
     // Stocker le refresh token
     newUser.refreshToken = refreshToken;
     await newUser.save();
-
-    console.log('newUser', newUser);
 
     res.status(200).json({ access_token: accessToken, refresh_token: refreshToken });
   } catch (error) {
@@ -91,8 +89,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
-  console.log('email', email);
-  console.log('password', password);
 
   if (!email || !password) {
     res.status(400).json({ message: "Email et mot de passe requis." });
@@ -149,12 +145,10 @@ export const getUserFromToken = async (req: CustomRequest, res: Response): Promi
 
     // Retrieve user photos
     const userPhotos = await UserPhotoModel.find({ userId: user._id }).select("photoUrl").lean();
-    console.log('userPhotos', userPhotos);
 
     // Append photos to the user object
     user.photos = userPhotos.map(photo => photo.photoUrl);
 
-    console.log('user', user);
     res.status(200).json(user);
   } catch (error) {
     res.status(401).json({ message: "Token invalide ou expiré." });
@@ -178,7 +172,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     const user = await UserModel.findById(decoded.id);
 
     if (!user || user.refreshToken !== token) {
-      res.status(403).json({ message: "Token invalide." });
+      res.status(403).json({ message: "Token expiré." });
       return;
     }
 
