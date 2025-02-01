@@ -29,7 +29,7 @@ export class WebSocketManager {
 
   constructor() {
     this.wss = new WebSocketServer({ 
-        port: 3001
+        port: parseInt(process.env.WEBSOCKET_PORT || '3001', 10)
      });
     this.clients = new Map();
     this.matchService = new MatchService();
@@ -83,7 +83,7 @@ export class WebSocketManager {
         authWs.isAlive = false;
         authWs.ping();
       });
-    }, 30000);
+    }, parseInt(process.env.PING_INTERVAL || '30000', 10));
   }
 
   private async handleMessage(ws: AuthenticatedWebSocket, data: string) {
