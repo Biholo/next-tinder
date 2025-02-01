@@ -35,6 +35,7 @@ export default function Register() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    console.log('errorMessage', errorMessage);
     if (errorMessage && errorMessage !== "te") {
       setConnectionError(errorMessage)
     } else {
