@@ -19,11 +19,6 @@ export function AppSidebar() {
   const [onlineStatuses, setOnlineStatuses] = useState<{[key: string]: boolean}>({})
   const [typingStatuses, setTypingStatuses] = useState<{[key: string]: boolean}>({})
 
-  useEffect(() => {
-    console.log('onlineUsers', onlineUsers)
-    console.log('typingUsers', typingUsers)
-    console.log('lastMessages', lastMessages)
-  }, [onlineUsers, typingUsers, lastMessages])
 
   // Séparer les matches avec et sans messages
   const matchesWithMessages = matches.filter((match) => match.lastMessage)
@@ -39,7 +34,6 @@ export function AppSidebar() {
   // Connexion WebSocket et gestion des événements
   useEffect(() => {
     if (user?._id) {
-      wsService.connect();
 
       const handleOnlineStatus = (data: WebSocketEvent) => {
         if (data.event === 'online_status') {

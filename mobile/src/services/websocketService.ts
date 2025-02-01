@@ -7,6 +7,7 @@ import {
   WebSocketEventType,
   RequestOnlineStatusEvent
 } from '@/models';
+import { WS_BASE_URL } from '@env';
 
 type WebSocketCallback = (data: WebSocketEvent) => void;
 
@@ -33,7 +34,7 @@ export class WebSocketService {
         return;
       }
 
-      const wsUrl = `ws://localhost:3001?token=${token}`;
+      const wsUrl = `${WS_BASE_URL}?token=${token}`;
       console.log('🌐 Tentative de connexion à:', wsUrl);
       
       this.ws = new WebSocket(wsUrl);

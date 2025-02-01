@@ -11,4 +11,5 @@ tinder-app
 .DS_Store
 
 /mobile/node_modules
+/mobile/.env
 /mobile-tinder

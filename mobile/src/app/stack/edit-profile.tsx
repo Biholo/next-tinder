@@ -1,28 +1,52 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { View, Text, Image, TouchableOpacity, ScrollView, Alert, Switch, TextInput } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { Ionicons, Feather } from "@expo/vector-icons"
 import { Picker } from "@react-native-picker/picker"
 import * as ImagePicker from "expo-image-picker"
+import { useAppDispatch } from "@/hooks/useAppDispatch"
+import { useAppSelector } from "@/hooks/useAppSelector"
+import { updateUser, uploadUserPhoto, deleteUserPhoto } from "@/redux/slices/userSlice"
+import { Header } from '@/components/layout/Header'
+
+interface Photo {
+  _id: string;
+  photoUrl: string;
+}
 
 export default function EditProfileScreen() {
   const router = useRouter()
+  const dispatch = useAppDispatch()
+  const { user } = useAppSelector((state) => state.auth)
+  
   const [smartPhotos, setSmartPhotos] = useState(true)
-  const [bio, setBio] = useState(
-    "Passionné par le cinéma (Inception meilleur film)\nIntelligence artificielle et Tech 🤓",
-  )
-  const [age, setAge] = useState("22")
-  const [gender, setGender] = useState("Homme")
-  const [lookingFor, setLookingFor] = useState("Les deux")
+  const [bio, setBio] = useState(user?.bio || "")
+  const [age, setAge] = useState(user?.dateOfBirth || "")
+  const [gender, setGender] = useState<'male' | 'female' | 'other'>(user?.gender || "male")
+  const [lookingFor, setLookingFor] = useState<'male' | 'female' | 'both'>(user?.preferences?.gender || "both")
+  const [photos, setPhotos] = useState<Photo[]>(user?.photos || [])
 
-  const [photos, setPhotos] = useState([
-    "/placeholder.svg",
-    "/placeholder.svg",
-    "/placeholder.svg",
-    "/placeholder.svg",
-    "/placeholder.svg",
-  ])
+  useEffect(() => {
+    if (user) {
+      setBio(user.bio || "")
+      setGender(user.gender || "male")
+      setLookingFor(user.preferences?.gender || "both")
+      setAge(calculateAge(user.dateOfBirth || ""))
+      setPhotos(user.photos || [])
+    }
+  }, [user])
+
+  const calculateAge = (dateOfBirth: string) => {
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
 
   const handleDeletePhoto = (index: number) => {
     Alert.alert("Supprimer la photo", "Es-tu sûr(e) de vouloir supprimer cette photo ?", [
@@ -33,10 +57,19 @@ export default function EditProfileScreen() {
       {
         text: "Supprimer",
         style: "destructive",
-        onPress: () => {
-          const newPhotos = [...photos]
-          newPhotos.splice(index, 1)
-          setPhotos(newPhotos)
+        onPress: async () => {
+          try {
+            const photoToDelete = photos[index];
+            if (photoToDelete?._id) {
+              await dispatch(deleteUserPhoto(photoToDelete._id)).unwrap();
+              const newPhotos = [...photos]
+              newPhotos.splice(index, 1)
+              setPhotos(newPhotos)
+            }
+          } catch (error) {
+            console.error('Erreur lors de la suppression de la photo:', error)
+            Alert.alert("Erreur", "Impossible de supprimer la photo")
+          }
         },
       },
     ])
@@ -53,39 +86,68 @@ export default function EditProfileScreen() {
       return
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    })
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      })
 
-    if (!result.canceled) {
-      setPhotos([...photos, result.assets[0].uri])
+      if (!result.canceled) {
+        const formData = new FormData();
+        formData.append('photo', {
+          uri: result.assets[0].uri,
+          type: 'image/jpeg',
+          name: 'photo.jpg',
+        } as any);
+
+        const response = await dispatch(uploadUserPhoto(formData)).unwrap()
+        if (response?.photo) {
+          setPhotos(prev => [...prev, response.photo])
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'upload de la photo:', error)
+      Alert.alert("Erreur", "Impossible d'ajouter la photo")
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      await dispatch(updateUser({
+        bio,
+        gender,
+        preferences: {
+          gender: lookingFor,
+          ageRange: user?.preferences?.ageRange || { min: 18, max: 50 }
+        }
+      })).unwrap()
+      
+      router.back()
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du profil:', error)
+      Alert.alert("Erreur", "Impossible de mettre à jour le profil")
     }
   }
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-950">
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-2 border-b border-zinc-800">
-        <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3">
-            <Ionicons name="chevron-back" size={28} color="#FF4458" />
+      <Header 
+        showBackButton 
+        title="Modifier mon profil"
+        rightComponent={
+          <TouchableOpacity onPress={handleSave}>
+            <Text className="text-[#FF4458] text-lg font-semibold">Terminé</Text>
           </TouchableOpacity>
-          <Text className="text-white text-xl font-semibold">Modifier mon profil</Text>
-        </View>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-[#FF4458] text-lg font-semibold">Terminé</Text>
-        </TouchableOpacity>
-      </View>
+        }
+      />
 
       <ScrollView className="flex-1">
         {/* Media Section */}
         <View className="p-4">
           <Text className="text-white text-xl mb-4">Média</Text>
           <View className="flex-row flex-wrap" style={{ gap: 4 }}>
-            {/* Existing Photos */}
             {photos.map((photo, index) => (
               <View key={index} className="relative" style={{ width: "32%", aspectRatio: 1 }}>
                 <Image source={{ uri: photo }} className="w-full h-full rounded-lg" />
@@ -98,7 +160,6 @@ export default function EditProfileScreen() {
               </View>
             ))}
 
-            {/* Add Photo Button */}
             {photos.length < 9 && (
               <TouchableOpacity
                 onPress={handleAddPhoto}
@@ -129,7 +190,7 @@ export default function EditProfileScreen() {
               <Text className="text-zinc-400 text-sm mb-1">Genre</Text>
               <Picker
                 selectedValue={gender}
-                onValueChange={(itemValue) => setGender(itemValue)}
+                onValueChange={(itemValue) => setGender(itemValue as 'male' | 'female' | 'other')}
                 style={{ color: "white" }}
                 dropdownIconColor="white"
               >
@@ -144,7 +205,7 @@ export default function EditProfileScreen() {
               <Text className="text-zinc-400 text-sm mb-1">Je recherche</Text>
               <Picker
                 selectedValue={lookingFor}
-                onValueChange={(itemValue) => setLookingFor(itemValue)}
+                onValueChange={(itemValue) => setLookingFor(itemValue as 'male' | 'female' | 'both')}
                 style={{ color: "white" }}
                 dropdownIconColor="white"
               >

@@ -18,16 +18,42 @@ import { useAppSelector } from "@/hooks/useAppSelector"
 import { wsService } from "@/services/websocketService"
 import { getMessages } from "@/redux/slices/messageSlice"
 import { Message } from "@/models"
+import { format } from "date-fns"
+
+interface Message {
+  _id: string;
+  matchId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  isOwnMessage: boolean;
+}
+
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  photos: Array<{ photoUrl: string }>;
+  age: number;
+  bio: string;
+}
+
+interface Match {
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function ConversationScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter()
   const dispatch = useAppDispatch()
   
   // États locaux
   const [messages, setMessages] = useState<Message[]>([])
-  const [user, setUser] = useState<any>(null)
-  const [match, setMatch] = useState<any>(null)
+  const [otherUser, setOtherUser] = useState<User | null>(null)
+  const [match, setMatch] = useState<Match | null>(null)
   const [message, setMessage] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   
@@ -35,44 +61,54 @@ export default function ConversationScreen() {
   const scrollViewRef = useRef<ScrollView>(null)
   const { user: currentUser } = useAppSelector((state) => state.auth)
 
+  console.log('🎯 ID de la conversation:', id);
+
   // Charger les messages
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        if (id && typeof id === 'string') {
-          const response = await dispatch(getMessages(id))
-          if ('payload' in response) {
-            const { messages: responseMessages, otherUser, match: responseMatch } = response.payload as any
-            if (responseMessages) setMessages(responseMessages)
-            if (otherUser) setUser(otherUser)
-            if (responseMatch) setMatch(responseMatch)
-          }
+        if (!id) {
+          console.error('❌ Pas d\'ID de conversation trouvé');
+          router.back();
+          return;
+        }
+
+        const response = await dispatch(getMessages(id)).unwrap();
+        console.log('✅ Messages récupérés:', response);
+        
+        if (response) {
+          setMessages(response.messages);
+          setOtherUser(response.otherUser);
+          setMatch(response.match);
         }
       } catch (error) {
-        console.error('Erreur lors de la récupération des messages:', error)
+        console.error('❌ Erreur lors de la récupération des messages:', error);
+        router.back();
       }
-    }
+    };
 
-    fetchMessages()
-  }, [dispatch, id])
+    fetchMessages();
+  }, [id, dispatch]);
 
   // Gestion du WebSocket
   useEffect(() => {
-    if (id && typeof id === 'string') {
+    if (id) {
       const handleNewMessage = (data: any) => {
         if (data.match_id === id) {
-          const newMessage: any = {
-            id: data.message_id || Date.now().toString(),
-            content: data.content,
+          const newMessage: Message = {
+            _id: data.message_id || Date.now().toString(),
+            matchId: id,
             senderId: data.sender_id,
-            timestamp: data.created_at || new Date(),
-            createdAt: data.created_at || new Date(),
-          }
-          setMessages(prev => [...prev, newMessage])
-          setIsTyping(false)
-          scrollViewRef.current?.scrollToEnd({ animated: true })
+            content: data.content,
+            createdAt: data.created_at || new Date().toISOString(),
+            updatedAt: data.created_at || new Date().toISOString(),
+            isOwnMessage: data.sender_id === currentUser?._id
+          };
+          setMessages(prev => [...prev, newMessage]);
+          setIsTyping(false);
+          scrollViewRef.current?.scrollToEnd({ animated: true });
         }
-      }
+      };
 
       const handleTyping = (data: any) => {
         if (data.match_id === id && data.sender_id !== currentUser?._id) {
@@ -155,19 +191,20 @@ export default function ConversationScreen() {
 
         {/* Profile Info */}
         <TouchableOpacity
-          onPress={() => router.push("/stack/details-profile")}
+          onPress={() => router.push(`/stack/details-profile?id=${otherUser?._id}`)}
           className="flex-1 flex-row items-center"
         >
           <View className="relative">
             <Image 
-              source={{ uri: user?.photos?.[0]?.photoUrl || "/placeholder.svg" }} 
+              source={{ uri: otherUser?.photos?.[0]?.photoUrl }} 
               className="w-8 h-8 rounded-full" 
             />
-            {user?.online && (
-              <View className="absolute right-0 bottom-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-zinc-950" />
-            )}
           </View>
-          <Text className="text-white text-lg font-semibold ml-3">{user?.firstName || "..."}</Text>
+          <View className="ml-3">
+            <Text className="text-white text-lg font-semibold">
+              {otherUser?.firstName}, {otherUser?.age}
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -179,25 +216,28 @@ export default function ConversationScreen() {
       >
         {messages.map((msg) => (
           <View 
-            key={msg.id}
+            key={msg._id}
             className={`flex-row items-end mb-4 ${
-              msg.senderId === currentUser?._id ? "justify-end" : "justify-start"
+              msg.isOwnMessage ? "justify-end" : "justify-start"
             }`}
           >
-            {msg.senderId !== currentUser?._id && (
+            {!msg.isOwnMessage && (
               <Image 
-                source={{ uri: user?.photos?.[0]?.photoUrl || "/placeholder.svg" }} 
+                source={{ uri: otherUser?.photos?.[0]?.photoUrl }} 
                 className="w-8 h-8 rounded-full mr-2" 
               />
             )}
             <View 
               className={`rounded-2xl px-4 py-3 max-w-[80%] ${
-                msg.senderId === currentUser?._id 
+                msg.isOwnMessage 
                   ? "bg-[#0095f6] rounded-br-none" 
                   : "bg-zinc-800 rounded-bl-none"
               }`}
             >
               <Text className="text-white">{msg.content}</Text>
+              <Text className="text-xs text-white/60 mt-1">
+                {format(new Date(msg.createdAt), "HH:mm")}
+              </Text>
             </View>
           </View>
         ))}
@@ -206,7 +246,7 @@ export default function ConversationScreen() {
         {isTyping && (
           <View className="flex-row items-center mb-4">
             <Image 
-              source={{ uri: user?.photos?.[0]?.photoUrl || "/placeholder.svg" }} 
+              source={{ uri: otherUser?.photos?.[0]?.photoUrl }} 
               className="w-8 h-8 rounded-full mr-2" 
             />
             <View className="bg-zinc-800 rounded-2xl rounded-bl-none px-4 py-3">
