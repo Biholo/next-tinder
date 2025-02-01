@@ -40,6 +40,7 @@ function App() {
 
       return () => {
         console.log('👋 Déconnexion WebSocket...');
+        wsService.sendUserDisconnected(currentUser._id);
         wsService.disconnect();
       };
     }
