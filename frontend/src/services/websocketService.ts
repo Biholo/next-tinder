@@ -33,7 +33,7 @@ export class WebSocketService {
       return;
     }
 
-    const wsUrl = `ws://localhost:3001?token=${token}`;
+    const wsUrl = `${import.meta.env.VITE_API_BASE_URL_WS}?token=${token}`;
     console.log('🌐 Tentative de connexion à:', wsUrl);
     
     try {
