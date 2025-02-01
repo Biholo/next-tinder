@@ -6,9 +6,14 @@ import {
   MessageEvent, 
   MessageReadEvent, 
   TypingEvent,
-  ConnectEvent
+  ConnectEvent,
+  MatchEvent,
+  SwipeEvent,
+  UserStatusEvent
 } from '@/types/websocket';
 import MessageModel from '@/models/messageModel';
+import MatchModel from '@/models/matchModel';
+import { MatchService } from '@/services/matchService';
 
 interface AuthenticatedWebSocket extends WebSocket {
   userId?: string;
@@ -18,12 +23,14 @@ interface AuthenticatedWebSocket extends WebSocket {
 export class WebSocketManager {
   private wss: WebSocketServer;
   private clients: Map<string, AuthenticatedWebSocket>;
+  private matchService: MatchService;
 
   constructor() {
     this.wss = new WebSocketServer({ 
         port: 3001
      });
     this.clients = new Map();
+    this.matchService = new MatchService();
     this.initialize();
   }
 
@@ -31,7 +38,6 @@ export class WebSocketManager {
     this.wss.on('connection', async (ws: AuthenticatedWebSocket, request) => {
       try {
         // Authentification via token
-
         console.log('🔌 Tentative de connexion WebSocket...');
         const token = request.url?.split('token=')[1];
         if (!token) {
@@ -50,12 +56,8 @@ export class WebSocketManager {
         this.clients.set(decoded.id, ws);
         console.log('🔌 Client ajouté à la map:', decoded.id);
 
-        // Envoyer message de bienvenue
-        const connectEvent: ConnectEvent = {
-          event: 'connect',
-          message: 'Bienvenue sur la messagerie en temps réel'
-        };
-        this.sendToClient(ws, connectEvent);
+        // Notifier les matches de la connexion
+        await this.notifyUserConnected(decoded.id);
 
         // Gérer les messages
         ws.on('message', (data: string) => this.handleMessage(ws, data));
@@ -96,9 +98,93 @@ export class WebSocketManager {
         case 'user_typing':
           this.handleUserTyping(ws, event as TypingEvent);
           break;
+        case 'swipe':
+          this.handleSwipe(ws, event as SwipeEvent);
+          break;
+        case 'user_disconnected':
+          this.handleUserDisconnected(ws, event as UserStatusEvent);
+          break;
+
       }
     } catch (error) {
       console.error('Erreur WebSocket:', error);
+    }
+  }
+
+  private async handleSwipe(ws: AuthenticatedWebSocket, event: SwipeEvent) {
+    const match = await MatchModel.findOne({
+      $or: [
+        { user1_id: ws.userId, user2_id: event.target_user_id },
+        { user1_id: event.target_user_id, user2_id: ws.userId }
+      ]
+    });
+
+    if (match && ws.userId) {
+      // Récupérer les détails du match pour les deux utilisateurs
+      const matchDetailsForUser1 = await this.matchService.getMatchWithDetails(match._id.toString(), match.user1_id.toString());
+      const matchDetailsForUser2 = await this.matchService.getMatchWithDetails(match._id.toString(), match.user2_id.toString());
+
+      if (matchDetailsForUser1 && matchDetailsForUser2) {
+        // Envoyer les détails du match à chaque utilisateur
+        const matchEventUser1: MatchEvent = {
+          event: 'new_match',
+          match_id: matchDetailsForUser1.match_id.toString(),
+          user: matchDetailsForUser1.user,
+          lastMessage: matchDetailsForUser1.lastMessage,
+          createdAt: matchDetailsForUser1.createdAt
+        };
+
+        const matchEventUser2: MatchEvent = {
+          event: 'new_match',
+          match_id: matchDetailsForUser2.match_id.toString(),
+          user: matchDetailsForUser2.user,
+          lastMessage: matchDetailsForUser2.lastMessage,
+          createdAt: matchDetailsForUser2.createdAt
+        };
+
+        this.sendToUser(match.user1_id.toString(), matchEventUser1);
+        this.sendToUser(match.user2_id.toString(), matchEventUser2);
+      }
+    }
+  }
+
+  private async notifyUserConnected(userId: string) {
+    console.log('🔔 Notification de connexion pour:', userId);
+    try {
+      const matchedUserIds = await this.matchService.getMatchedUserIds(userId);
+
+      for (const otherUserId of matchedUserIds) {
+        const statusEvent: UserStatusEvent = {
+          event: 'user_connected',
+          user_id: userId
+        };
+
+        this.sendToUser(otherUserId, statusEvent);
+        console.log(`✅ Notification envoyée à ${otherUserId}`);
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la notification de connexion:', error);
+    }
+  }
+
+  private async handleUserDisconnected(ws: AuthenticatedWebSocket, event: UserStatusEvent) {
+    if (!ws.userId) return;
+    
+    console.log('🔔 Notification de déconnexion pour:', ws.userId);
+    try {
+      const matchedUserIds = await this.matchService.getMatchedUserIds(ws.userId);
+
+      const statusEvent: UserStatusEvent = {
+        event: 'user_disconnected',
+        user_id: ws.userId
+      };
+
+      for (const otherUserId of matchedUserIds) {
+        this.sendToUser(otherUserId, statusEvent);
+        console.log(`✅ Notification de déconnexion envoyée à ${otherUserId}`);
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la notification de déconnexion:', error);
     }
   }
 
@@ -115,10 +201,8 @@ export class WebSocketManager {
       match_id: event.match_id,
       receiver_id: event.receiver_id,
       content: event.content,
-      // @ts-ignore
       message_id: message._id.toString(),
-      // @ts-ignore
-      created_at: message.created_at,
+      created_at: message.createdAt,
       sender_id: ws.userId
     };
 
@@ -173,10 +257,7 @@ export class WebSocketManager {
     ws.send(JSON.stringify(event));
   }
 
-  public broadcastNewMatch(matchData: WebSocketEvent) {
-    if ('user1_id' in matchData && 'user2_id' in matchData) {
-      this.sendToUser(matchData.user1_id, matchData);
-      this.sendToUser(matchData.user2_id, matchData);
-    }
+  public broadcastNewMatch(user1Id: string, user2Id: string) {
+    this.handleSwipe({ userId: user1Id } as AuthenticatedWebSocket, { target_user_id: user2Id, direction: 'LIKE' } as SwipeEvent);
   }
 } 

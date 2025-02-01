@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMessage extends Document {
+    _id: string;
     matchId: string;
     senderId: string;
     content: string;

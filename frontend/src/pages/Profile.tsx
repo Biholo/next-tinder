@@ -54,7 +54,7 @@ export default function Profile() {
                                     <img
                                         src={src || "/placeholder.svg"}
                                         alt={`Photo de profil ${index + 1}`}
-                                        className="object-cover"
+                                        className="object-cover w-full h-full"
                                     />
                                 </div>
                             ))}
