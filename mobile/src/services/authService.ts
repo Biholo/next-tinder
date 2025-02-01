@@ -1,5 +1,5 @@
-import Cookies from 'js-cookie';
 import { api } from '@/services/interceptor';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface User {
     id: string;
@@ -30,13 +30,14 @@ export interface UserCreation {
 class AuthService {
 
     public async registerUser(user: UserCreation): Promise<any> {
+
         const response = await api.fetchRequest(`/api/auth/register`, 'POST', user);
 
         if (response.access_token) {
-            Cookies.set('accessToken', response.access_token, { expires: 1 }); // expire dans 1 jour
+            await AsyncStorage.setItem('accessToken', response.access_token);
         }
         if (response.refresh_token) {
-            Cookies.set('refreshToken', response.refresh_token, { expires: 7 }); // expire dans 7 jours
+            await AsyncStorage.setItem('refreshToken', response.refresh_token);
         }
 
         return response;
@@ -60,10 +61,10 @@ class AuthService {
         });
 
         if (response.access_token) {
-            Cookies.set('accessToken', response.access_token, { expires: 1 }); // expire dans 1 jour
+            await AsyncStorage.setItem('accessToken', response.access_token);
         }
         if (response.refresh_token) {
-            Cookies.set('refreshToken', response.refresh_token, { expires: 7 }); // expire dans 7 jours
+            await AsyncStorage.setItem('refreshToken', response.refresh_token);
         }
 
         return response;

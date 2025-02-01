@@ -57,7 +57,9 @@ export const registerSchema = Joi.object({
       max: Joi.number().integer().min(18).max(100).optional()
     }).optional()
   }).optional(),
+  confirmPassword: Joi.string().optional()
 });
+
 
 /**
  * Validator for user login.
