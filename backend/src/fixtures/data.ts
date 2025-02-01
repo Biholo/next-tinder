@@ -33,7 +33,7 @@ const mainUser = {
 };
 
 // Génération de 250 utilisateurs (pour avoir assez d'utilisateurs pour 200 matches)
-const otherUsers = Array.from({ length: 250 }, () => {
+const otherUsers = Array.from({ length: 2 }, () => {
     const gender = faker.helpers.arrayElement(['male', 'female']) as 'male' | 'female';
     const firstName = gender === 'male' ? faker.person.firstName('male') : faker.person.firstName('female');
     return {
@@ -41,7 +41,7 @@ const otherUsers = Array.from({ length: 250 }, () => {
         firstName,
         lastName: faker.person.lastName(),
         email: faker.internet.email(),
-        password: hashPassword(faker.internet.password()),
+        password: hashPassword("adminpassword"),
         gender,
         dateOfBirth: faker.date.between({ from: '1980-01-01', to: '2000-12-31' }),
         bio: faker.lorem.paragraph(),

@@ -141,7 +141,6 @@ export default function SwipeCards() {
               onSwipe={(dir: Direction) => onSwipe(dir, profile.firstName)}
               onCardLeftScreen={() => onCardLeftScreen(profile.firstName)}
               flickOnSwipe={true}
-              
               preventSwipe={["down"]}
               className="absolute w-[90%] max-w-md h-[70vh]"
             >
