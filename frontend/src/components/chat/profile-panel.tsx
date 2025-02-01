@@ -1,4 +1,4 @@
-import type { User } from "@/models/chat"
+import type { User } from "@/models"
 import { MapPin } from "lucide-react"
 
 interface ProfilePanelProps {
@@ -11,14 +11,14 @@ export function ProfilePanel({ user }: ProfilePanelProps) {
       <div className="p-4 space-y-6">
         <div className="relative aspect-square rounded-lg overflow-hidden">
           <img
-            src={user.photos[0].photoUrl || "/placeholder.svg"}
-            alt={`Photo de ${user.name}`}
+            src={user.photos[0]?.photoUrl || "/placeholder.svg"}
+            alt={`Photo de ${user.firstName}`}
             className="w-full h-full object-cover"
           />
         </div>
         <div>
           <h2 className="text-2xl font-semibold">
-            {user.name} {user.age && `• ${user.age}`}
+            {user.firstName} {user.age && `• ${user.age}`}
           </h2>
         </div>
         <div className="space-y-4">

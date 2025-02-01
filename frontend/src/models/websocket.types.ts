@@ -1,3 +1,4 @@
+// Types d'événements WebSocket
 export type WebSocketEventType = 
     | 'connect'
     | 'disconnect'
@@ -8,14 +9,17 @@ export type WebSocketEventType =
     | 'new_match'
     | 'user_typing'
     | 'user_typing_display'
-    | 'notification';
+    | 'notification'
+    | 'swipe'
+    | 'user_connected'
+    | 'user_disconnected';
 
-// Base event type
+// Type de base pour tous les événements
 export interface BaseWebSocketEvent {
     event: WebSocketEventType;
 }
 
-// Event types spécifiques
+// Types d'événements spécifiques
 export interface MessageEvent extends BaseWebSocketEvent {
     match_id: string;
     sender_id?: string;
@@ -48,15 +52,28 @@ export interface ConnectEvent extends BaseWebSocketEvent {
     message: string;
 }
 
-// Union type pour tous les événements possibles
+export interface SwipeEvent extends BaseWebSocketEvent {
+    event: 'swipe';
+    target_user_id: string;
+    direction: string;
+}
+
+export interface UserConnectionEvent extends BaseWebSocketEvent {
+    event: 'user_connected' | 'user_disconnected';
+    user_id: string;
+}
+
+// Union type de tous les événements possibles
 export type WebSocketEvent = 
     | MessageEvent 
     | MessageReadEvent 
     | TypingEvent 
     | MatchEvent 
-    | ConnectEvent;
+    | ConnectEvent
+    | SwipeEvent
+    | UserConnectionEvent;
 
-// Types de données
+// Types de données pour les messages
 export interface WebSocketMessage {
     match_id: string;
     sender_id: string;
