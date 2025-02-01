@@ -18,7 +18,7 @@ export default function Login() {
   const dispatch = useAppDispatch()
 
   useEffect(() => {
-    if (errorMessage && errorMessage !== "Aucun token trouvé") {
+    if (errorMessage && errorMessage !== "Aucun token trouvé" && errorMessage !== "Token expiré.") {
       setConnectionError(errorMessage)
     } else {
       setConnectionError(null)
@@ -57,6 +57,7 @@ export default function Login() {
               placeholder="Email" 
               className="w-full px-4 py-2 border rounded-full" 
               onChange={(e) => setEmail(e.target.value)} 
+              autoComplete="email"
             />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
@@ -66,6 +67,7 @@ export default function Login() {
               placeholder="Mot de passe" 
               className="w-full px-4 py-2 border rounded-full" 
               onChange={(e) => setPassword(e.target.value)} 
+              autoComplete="current-password"
             />
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
           </div>

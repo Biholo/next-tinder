@@ -1,4 +1,4 @@
-import AuthService from "@/services/authService";
+import { authService } from "@/services/authService";
 import { api } from "@/services/interceptor";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
@@ -35,7 +35,7 @@ export const autoLogin = createAsyncThunk(
 
             if (accessToken) {
                 try {
-                    const user = await new AuthService().getUserByToken(accessToken);
+                    const user = await authService.getUserByToken(accessToken);
                     return { user, tokens: { accessToken, refreshToken: refreshToken || '' } };
                 } catch (error) {
                     if (!refreshToken) throw new Error('Pas de refresh token');
@@ -45,7 +45,7 @@ export const autoLogin = createAsyncThunk(
             if(refreshToken) {
                 const newTokens = await api.getNewAccessToken(refreshToken);
                 if (newTokens) {
-                    const user = await new AuthService().getUserByToken(newTokens.accessToken);
+                        const user = await authService.getUserByToken(newTokens.access_token);
                     return { user, tokens: newTokens };
                 }
             }
@@ -61,11 +61,11 @@ export const login = createAsyncThunk(
     'auth/login',
     async (credentials: { email: string; password: string }, { rejectWithValue }) => {
         try {
-            const response = await new AuthService().loginUser(credentials);
+            const response = await authService.loginUser(credentials);
             if (!response.access_token) {
                 throw new Error('Token non reçu du serveur');
             }
-            const user = await new AuthService().getUserByToken(response.access_token);
+            const user = await authService.getUserByToken(response.access_token);
             return { user, tokens: { 
                 accessToken: response.access_token, 
                 refreshToken: response.refresh_token 
@@ -82,8 +82,8 @@ export const register = createAsyncThunk(
     'auth/register',
     async (userData: any, { rejectWithValue }) => {
         try {
-            const response = await new AuthService().registerUser(userData);
-            const user = await new AuthService().getUserByToken(response.access_token);
+            const response = await authService.registerUser(userData);
+            const user = await authService.getUserByToken(response.access_token);
             return { user, tokens: { 
                 accessToken: response.access_token, 
                 refreshToken: response.refresh_token 
@@ -103,7 +103,7 @@ export const logout = createAsyncThunk(
             Cookies.remove('accessToken');
             Cookies.remove('refreshToken');
             if(refreshInCookie) {
-                await new AuthService().logout(refreshInCookie);
+                await authService.logout(refreshInCookie);
             }
             return null;
         } catch (error: any) {

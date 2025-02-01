@@ -11,7 +11,9 @@ export type WebSocketEventType =
   | 'notification'
   | 'swipe'
   | 'user_connected'
-  | 'user_disconnected';
+  | 'user_disconnected'
+  | 'request_online_status'
+  | 'online_status';
 
 export interface BaseWebSocketEvent {
   event: WebSocketEventType;
@@ -76,7 +78,9 @@ export type WebSocketEvent =
   | MatchEvent 
   | ConnectEvent
   | SwipeEvent
-  | UserStatusEvent;
+  | UserStatusEvent
+  | OnlineStatusEvent
+  | RequestOnlineStatusEvent;
 
 export interface Message {
   match_id: string;
@@ -112,3 +116,15 @@ export interface Notification {
   data: any;
   created_at: string;
 }
+
+export interface OnlineStatusEvent extends BaseWebSocketEvent {
+  event: 'online_status';
+  userId: string;
+  onlineStatuses: Array<{ userId: string; isOnline: boolean }>;
+}
+
+export interface RequestOnlineStatusEvent extends BaseWebSocketEvent {
+  event: 'request_online_status';
+  userId: string;
+}
+

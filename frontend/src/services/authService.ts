@@ -10,23 +10,22 @@ import {
 } from '@/models';
 
 class AuthService {
-    public async registerUser(user: RegisterCredentials): Promise<ApiResponse<AuthResponse>> {
+    public async registerUser(user: RegisterCredentials): Promise<AuthResponse> {
         const response = await api.fetchRequest('/api/auth/register', 'POST', user);
-        if (response.data.access_token) {
-            Cookies.set('accessToken', response.data.access_token, { expires: 1 });
+        if (response.access_token) {
+            Cookies.set('accessToken', response.access_token, { expires: 1 });
             Cookies.set('refreshToken', response.data.refresh_token, { expires: 7 });
         }
         return response;
     }
 
-    public async loginUser(credentials: LoginCredentials): Promise<ApiResponse<AuthResponse>> {
+    public async loginUser(credentials: LoginCredentials): Promise<AuthResponse> {
         const response = await api.fetchRequest('/api/auth/login', 'POST', credentials);
-
-        if (response.data.access_token) {
-            Cookies.set('accessToken', response.data.access_token, { expires: 1 });
-            Cookies.set('refreshToken', response.data.refresh_token, { expires: 7 });
+        console.log(response);
+        if (response.access_token) {
+            Cookies.set('accessToken', response.access_token, { expires: 1 });
+            Cookies.set('refreshToken', response.refresh_token, { expires: 7 });
         }
-
         return response;
     }
 
@@ -43,4 +42,4 @@ class AuthService {
     }
 }
 
-export default new AuthService();
+export const authService = new AuthService();

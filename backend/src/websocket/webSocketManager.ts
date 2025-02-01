@@ -9,7 +9,9 @@ import {
   ConnectEvent,
   MatchEvent,
   SwipeEvent,
-  UserStatusEvent
+  UserStatusEvent,
+  OnlineStatusEvent,
+  RequestOnlineStatusEvent
 } from '@/types/websocket';
 import MessageModel from '@/models/messageModel';
 import MatchModel from '@/models/matchModel';
@@ -87,6 +89,8 @@ export class WebSocketManager {
   private async handleMessage(ws: AuthenticatedWebSocket, data: string) {
     try {
       const event: WebSocketEvent = JSON.parse(data);
+      console.log('Event received [handleMessage]:', event);
+
 
       switch (event.event) {
         case 'send_message':
@@ -104,11 +108,36 @@ export class WebSocketManager {
         case 'user_disconnected':
           this.handleUserDisconnected(ws, event as UserStatusEvent);
           break;
+        case 'request_online_status':
+          this.handleRequestOnlineStatus(ws, event as RequestOnlineStatusEvent);
+          break;
 
       }
     } catch (error) {
       console.error('Erreur WebSocket:', error);
     }
+  }
+
+  private async handleRequestOnlineStatus(ws: AuthenticatedWebSocket, event: RequestOnlineStatusEvent) {
+    const userId = ws.userId;
+    if (!userId) return;
+
+    const matchedUserIds = await this.matchService.getMatchedUserIds(userId);
+
+    // Récupérer les statuts en ligne
+    const onlineStatuses = matchedUserIds.map(matchedUserId => ({
+      userId: matchedUserId,
+      isOnline: this.clients.has(matchedUserId)
+    }));
+
+    // Envoyer les statuts en ligne
+    const onlineStatusEvent: OnlineStatusEvent = {
+      event: 'online_status',
+      userId: userId,
+      onlineStatuses: onlineStatuses
+    };
+
+    this.sendToUser(userId, onlineStatusEvent);
   }
 
   private async handleSwipe(ws: AuthenticatedWebSocket, event: SwipeEvent) {
@@ -188,7 +217,25 @@ export class WebSocketManager {
     }
   }
 
+  private async getReceiverIdFromMatch(matchId: string, senderId: string): Promise<string | null> {
+    console.log('🔍 Recherche du receiverId pour le match:', matchId, 'et sender:', senderId);
+    try {
+      const match = await MatchModel.findById(matchId);
+      if (!match) {
+        console.error('❌ Match non trouvé');
+        return null;
+      }
+      const receiverId = match.user1_id.toString() === senderId ? match.user2_id.toString() : match.user1_id.toString();
+      console.log('✅ ReceiverId trouvé:', receiverId);
+      return receiverId;
+    } catch (error) {
+      console.error('❌ Erreur lors de la recherche du receiverId:', error);
+      return null;
+    }
+  }
+
   private async handleSendMessage(ws: AuthenticatedWebSocket, event: MessageEvent) {
+    console.log('Event received [handleSendMessage]:', event);
     const message = await MessageModel.create({
       matchId: event.match_id,
       senderId: ws.userId,
@@ -196,17 +243,23 @@ export class WebSocketManager {
       createdAt: new Date()
     });
 
+    const receiverId = await this.getReceiverIdFromMatch(event.match_id, ws.userId || '');
+    if (!receiverId) {
+      console.error('❌ Impossible de déterminer le destinataire');
+      return;
+    }
+
     const messageEvent: MessageEvent = {
       event: 'receive_message',
       match_id: event.match_id,
-      receiver_id: event.receiver_id,
+      receiver_id: receiverId,
       content: event.content,
       message_id: message._id.toString(),
       created_at: message.createdAt,
       sender_id: ws.userId
     };
 
-    this.sendToUser(event.receiver_id, messageEvent);
+    this.sendToUser(receiverId, messageEvent);
     this.sendToClient(ws, messageEvent);
   }
 
@@ -236,7 +289,7 @@ export class WebSocketManager {
       sender_id: ws.userId,
       receiver_id: event.receiver_id
     };
-
+    console.log('🔔 TypingEvent:', typingEvent);
     this.sendToUser(event.receiver_id, typingEvent);
   }
 
