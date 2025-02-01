@@ -1,38 +1,48 @@
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import React from 'react';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
-type ChatListItemProps = {
-  name: string;
-  message: string;
-  status?: 'online' | 'offline';
-  action?: string;
-};
+interface ChatListItemProps {
+  match: any;
+  onPress: () => void;
+}
 
-export function ChatListItem({ name, message, status, action }: ChatListItemProps) {
-  const router = useRouter();
+export const ChatListItem: React.FC<ChatListItemProps> = ({ match, onPress }) => {
+  const hasMessages = !!match.lastMessage;
 
   return (
     <TouchableOpacity 
-      className="flex-row items-center mb-4"
-      onPress={() => router.push("/stack/conversation")}
+      onPress={onPress}
+      className="flex-row items-center p-4 border-b border-zinc-800"
     >
       <View className="relative">
-        <View className="w-14 h-14 rounded-full bg-zinc-800" />
-        {status === 'online' && (
+        <Image 
+          source={{ uri: match.otherUser.photos[0]?.photoUrl || "/placeholder.svg" }}
+          className="w-12 h-12 rounded-full"
+        />
+        {match.otherUser.online && (
           <View className="absolute right-0 bottom-0 w-3 h-3 bg-green-500 rounded-full border-2 border-black" />
         )}
       </View>
+      
       <View className="flex-1 ml-3">
         <View className="flex-row items-center justify-between">
-          <Text className="text-white font-semibold">{name}</Text>
-          {action && (
-            <View className="bg-zinc-800 rounded-full px-3 py-1">
-              <Text className="text-white text-xs">{action}</Text>
-            </View>
+          <Text className="text-white font-semibold">{match.otherUser.firstName}</Text>
+          {hasMessages && (
+            <Text className="text-gray-400 text-xs">
+              {format(new Date(match.lastMessage.createdAt), "HH:mm", { locale: fr })}
+            </Text>
           )}
         </View>
-        <Text className="text-gray-400 text-sm">{message}</Text>
+        
+        <Text className="text-gray-400 text-sm" numberOfLines={1}>
+          {hasMessages 
+            ? match.lastMessage.content
+            : `Match le ${format(new Date(match.createdAt), "dd/MM/yyyy", { locale: fr })}`
+          }
+        </Text>
       </View>
     </TouchableOpacity>
   );
-} 
+}; 

@@ -1,9 +1,7 @@
-import AuthService from "@/services/authService";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from "@/services/authService";
 import { api } from "@/services/interceptor";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { toast } from "react-toastify";
-
 
 interface AuthState {
     user: any | null;
@@ -30,14 +28,13 @@ export const autoLogin = createAsyncThunk(
             const accessToken = await AsyncStorage.getItem('accessToken');
             const refreshToken = await AsyncStorage.getItem('refreshToken');
 
-
             if (!accessToken && !refreshToken) {
                 return rejectWithValue('');
             }
 
             if (accessToken) {
                 try {
-                    const user = await new AuthService().getUserByToken(accessToken);
+                    const user = await authService.getUserByToken(accessToken);
                     return { user, tokens: { accessToken, refreshToken: refreshToken || '' } };
                 } catch (error) {
                     if (!refreshToken) throw new Error('Pas de refresh token');
@@ -47,7 +44,10 @@ export const autoLogin = createAsyncThunk(
             if(refreshToken) {
                 const newTokens = await api.getNewAccessToken(refreshToken);
                 if (newTokens) {
-                    const user = await new AuthService().getUserByToken(newTokens.accessToken);
+                    const user = await authService.getUserByToken(newTokens.access_token);
+                    // Sauvegarder les nouveaux tokens
+                    await AsyncStorage.setItem('accessToken', newTokens.access_token);
+                    await AsyncStorage.setItem('refreshToken', newTokens.refresh_token);
                     return { user, tokens: newTokens };
                 }
             }
@@ -63,11 +63,15 @@ export const login = createAsyncThunk(
     'auth/login',
     async (credentials: { email: string; password: string }, { rejectWithValue }) => {
         try {
-            const response = await new AuthService().loginUser(credentials);
+            const response = await authService.loginUser(credentials);
             if (!response.access_token) {
                 throw new Error('Token non reçu du serveur');
             }
-            const user = await new AuthService().getUserByToken(response.access_token);
+            // Sauvegarder les tokens
+            await AsyncStorage.setItem('accessToken', response.access_token);
+            await AsyncStorage.setItem('refreshToken', response.refresh_token);
+            
+            const user = await authService.getUserByToken(response.access_token);
             return { user, tokens: { 
                 accessToken: response.access_token, 
                 refreshToken: response.refresh_token 
@@ -84,16 +88,17 @@ export const register = createAsyncThunk(
     'auth/register',
     async (userData: any, { rejectWithValue }) => {
         try {
-            const response = await new AuthService().registerUser(userData);
-            const user = await new AuthService().getUserByToken(response.access_token);
+            const response = await authService.registerUser(userData);
+            await AsyncStorage.setItem('accessToken', response.access_token);
+            await AsyncStorage.setItem('refreshToken', response.refresh_token);
+            
+            const user = await authService.getUserByToken(response.access_token);
             return { user, tokens: { 
                 accessToken: response.access_token, 
                 refreshToken: response.refresh_token 
             }};
         } catch (error: any) {
-            console.log(error);
-            
-            return rejectWithValue(error.message);
+            return rejectWithValue(error.message || 'Erreur lors de l\'inscription');
         }
     }
 );
@@ -103,12 +108,11 @@ export const logout = createAsyncThunk(
     'auth/logout',
     async (_, { rejectWithValue }) => {
         try {
-            const refreshInCookie = await AsyncStorage.getItem('refreshToken');
+            const refreshToken = await AsyncStorage.getItem('refreshToken');
             await AsyncStorage.removeItem('accessToken');
             await AsyncStorage.removeItem('refreshToken');
-            if(refreshInCookie) {
-
-                await new AuthService().logout(refreshInCookie);
+            if(refreshToken) {
+                await authService.logout(refreshToken);
             }
             return null;
         } catch (error: any) {
@@ -145,7 +149,6 @@ const authSlice = createSlice({
                 state.isAuthenticated = true;
                 state.user = action.payload.user;
                 state.accessToken = action.payload.tokens.accessToken;
-                toast.success("Connexion réussie");
             })
             .addCase(autoLogin.rejected, (state, action) => {
                 state.loading = false;
@@ -162,12 +165,10 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.isAuthenticated = true;
                 state.user = action.payload.user;
-                toast.success("Connexion réussie");
             })
             .addCase(login.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
-                toast.error(state.error || 'Erreur lors de la connexion');
             })
             // Register
             .addCase(register.pending, (state) => {
@@ -178,19 +179,17 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.isAuthenticated = true;
                 state.user = action.payload.user;
-                toast.success("Inscription réussie");
+                state.accessToken = action.payload.tokens.accessToken;
             })
             .addCase(register.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
-                toast.error(state.error);
             })
             // Logout
             .addCase(logout.fulfilled, (state) => {
                 state.user = null;
                 state.isAuthenticated = false;
                 state.error = null;
-                toast.success("Déconnexion réussie");
             });
     },
 });
