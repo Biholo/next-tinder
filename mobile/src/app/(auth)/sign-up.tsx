@@ -1,10 +1,15 @@
-import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
-import { useRouter } from "expo-router"
+import { useAppDispatch } from "@/hooks/useAppDispatch"
+import { register } from "@/redux/slices/authSlice"
+import DatePicker from '@react-native-community/datetimepicker'
+import { Picker } from '@react-native-picker/picker'
 import { LinearGradient } from "expo-linear-gradient"
+import { useRouter } from "expo-router"
+import { useState } from "react"
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native"
 
 export default function SignUpScreen() {
   const router = useRouter()
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [formData, setFormData] = useState({
     lastName: "",
     firstName: "",
@@ -15,6 +20,7 @@ export default function SignUpScreen() {
     password: "",
     confirmPassword: "",
   })
+  const dispatch = useAppDispatch()
 
   const handleChange = (name: string, value: string) => {
     setFormData((prevState) => ({
@@ -23,10 +29,22 @@ export default function SignUpScreen() {
     }))
   }
 
-  const handleSignUp = () => {
-    // Logique d'inscription à implémenter
-    console.log("Données du formulaire:", formData)
+  const handleSignUp = async () => {
+    try {
+      console.log(formData);
+      const response = await dispatch(register(formData))
+    } catch (error) {
+      console.log(error);
+    }
   }
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      const formattedDate = selectedDate.toISOString().split('T')[0];
+      handleChange('dateOfBirth', formattedDate);
+    }
+  };
 
   return (
     <LinearGradient colors={["#ec4899", "#f97316"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="flex-1">
@@ -71,19 +89,37 @@ export default function SignUpScreen() {
                 className="px-4 py-3 rounded-full border border-gray-300 mb-4"
               />
 
-              <TextInput
-                placeholder="Date de naissance"
-                value={formData.dateOfBirth}
-                onChangeText={(text) => handleChange("dateOfBirth", text)}
+              <TouchableOpacity 
+                onPress={() => setShowDatePicker(true)}
                 className="px-4 py-3 rounded-full border border-gray-300 mb-4"
-              />
+              >
+                <Text className={formData.dateOfBirth ? "text-black" : "text-gray-500"}>
+                  {formData.dateOfBirth || "Date de naissance"}
+                </Text>
+              </TouchableOpacity>
 
-              <TextInput
-                placeholder="Genre"
-                value={formData.gender}
-                onChangeText={(text) => handleChange("gender", text)}
-                className="px-4 py-3 rounded-full border border-gray-300 mb-4"
-              />
+              {showDatePicker && (
+                <DatePicker
+                  value={formData.dateOfBirth ? new Date(formData.dateOfBirth) : new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                />
+              )}
+
+              <View className="border border-gray-300 rounded-full mb-4 px-2">
+                <Picker
+                  selectedValue={formData.gender}
+                  onValueChange={(value) => handleChange('gender', value)}
+                  style={{ height: 50 }}
+                >
+                  <Picker.Item label="Sélectionnez votre genre" value="" />
+                  <Picker.Item label="Homme" value="male" />
+                  <Picker.Item label="Femme" value="female" />
+                  <Picker.Item label="Autre" value="other" />
+                </Picker>
+              </View>
 
               <TextInput
                 placeholder="Mot de passe"

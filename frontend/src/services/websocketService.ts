@@ -1,4 +1,12 @@
-import { WebSocketEvent, MessageEvent, UserStatusEvent, RequestOnlineStatusEvent } from '@/models/websocket';
+import { 
+  WebSocketEvent, 
+  MessageEvent, 
+  SwipeEvent, 
+  UserConnectionEvent,
+  WebSocketEventType,
+  RequestOnlineStatusEvent
+} from '@/models';
+
 import Cookies from 'js-cookie';
 
 type WebSocketCallback = (data: WebSocketEvent) => void;
@@ -91,7 +99,7 @@ export class WebSocketService {
     }, delay);
   }
 
-  public addEventListener(event: string, callback: WebSocketCallback) {
+  public addEventListener(event: WebSocketEventType, callback: WebSocketCallback) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, []);
     }
@@ -99,7 +107,7 @@ export class WebSocketService {
     console.log(`👂 Écouteur ajouté pour l'événement: ${event}`);
   }
 
-  public removeEventListener(event: string, callback: WebSocketCallback) {
+  public removeEventListener(event: WebSocketEventType, callback: WebSocketCallback) {
     const callbacks = this.listeners.get(event);
     if (callbacks) {
       const index = callbacks.indexOf(callback);
@@ -110,7 +118,7 @@ export class WebSocketService {
     }
   }
 
-  private notifyListeners(event: string, data: WebSocketEvent) {
+  private notifyListeners(event: WebSocketEventType, data: WebSocketEvent) {
     console.log(`📢 Notification des écouteurs pour l'événement: ${event}`);
     const callbacks = this.listeners.get(event);
     callbacks?.forEach(callback => callback(data));
@@ -182,19 +190,21 @@ export class WebSocketService {
   }
 
   public sendSwipe(targetUserId: string, direction: string) {
-    this.send({
-      event: 'swipe',
-      target_user_id: targetUserId,
-      direction
-    });
-  }
+    const message: SwipeEvent = {
+        event: 'swipe',
+        target_user_id: targetUserId,
+        direction
+    };
+    this.send(message);
+}
 
 
   public sendUserDisconnected(userId: string) {
-    this.send({
-      event: 'user_disconnected',
-      user_id: userId
-    });
+    const message: UserConnectionEvent = {
+        event: 'user_disconnected',
+        user_id: userId
+    };
+    this.send(message);
   }
 
   public requestOnlineStatus() {
