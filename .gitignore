@@ -10,3 +10,4 @@ package-lock.json
 .DS_Store
 
 /mobile/node_modules
+/mobile-tinder
