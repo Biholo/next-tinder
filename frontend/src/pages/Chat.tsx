@@ -9,27 +9,38 @@ import { getMessages } from '../redux/slices/messageSlice';
 import { useParams } from "react-router-dom";
 import { useAppDispatch } from "@/hooks/useAppDispatch"
 import { useAppSelector } from "@/hooks/useAppSelector"
-import { wsService } from "@/services/websocket"
+import { wsService } from "@/services/websocketService"
 
 interface Message {
   id: string;
   content: string;
   senderId: string;
   timestamp: Date | string | number;
+  createdAt: Date | string | number;
+}
+
+interface MessageResponse {
+  messages: Message[];
+  otherUser: any;
+  match: any;
 }
 
 export default function ChatPage() {
   const { matchId } = useParams<{ matchId: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [user, setUser] = useState<any>(null);
+  
   const [match, setMatch] = useState<any>(null);
+  const [isTyping, setIsTyping] = useState(false);
   const { user: currentUser } = useAppSelector(state => state.auth);
-  const dispatch = useAppDispatch();
+  const { typingUsers } = useAppSelector(state => state.websocket);
+  const dispatch = useAppDispatch()
+  
 
   // Connexion WebSocket et gestion des événements
   useEffect(() => {
     if (currentUser?._id) {
-      wsService.connect(currentUser._id);
+      wsService.connect();
 
       const handleNewMessage = (data: any) => {
         if (data.match_id === matchId) {
@@ -38,8 +49,10 @@ export default function ChatPage() {
             content: data.content,
             senderId: data.sender_id,
             timestamp: data.created_at || new Date(),
+            createdAt: data.created_at || new Date(),
           };
           setMessages(prev => [...prev, newMessage]);
+          setIsTyping(false); // Réinitialiser l'état de frappe quand un message est reçu
         }
       };
 
@@ -49,12 +62,22 @@ export default function ChatPage() {
         }
       };
 
+      const handleTyping = (data: any) => {
+        if (data.match_id === matchId && data.sender_id !== currentUser._id) {
+          setIsTyping(true);
+          // Réinitialiser après 3 secondes
+          setTimeout(() => setIsTyping(false), 3000);
+        }
+      };
+
       wsService.addEventListener('receive_message', handleNewMessage);
       wsService.addEventListener('message_read_confirm', handleMessageRead);
+      wsService.addEventListener('user_typing_display', handleTyping);
 
       return () => {
         wsService.removeEventListener('receive_message', handleNewMessage);
         wsService.removeEventListener('message_read_confirm', handleMessageRead);
+        wsService.removeEventListener('user_typing_display', handleTyping);
         wsService.disconnect();
       };
     }
@@ -66,7 +89,7 @@ export default function ChatPage() {
         if (matchId) {
           const response = await dispatch(getMessages(matchId));
           if ('payload' in response) {
-            const { messages: responseMessages, otherUser, match: responseMatch } = response.payload;
+            const { messages: responseMessages, otherUser, match: responseMatch } = response.payload as MessageResponse;
             if (responseMessages) setMessages(responseMessages);
             if (otherUser) setUser(otherUser);
             if (responseMatch) setMatch(responseMatch);
@@ -108,15 +131,25 @@ export default function ChatPage() {
           <>
             <ChatHeader match={match} otherUser={user} />
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
+              {messages.map((message, index) => (
                 <MessageBubble 
-                  key={message.id} 
+                  key={index} 
                   message={message} 
                   isOwn={message.senderId === currentUser?._id} 
                 />
               ))}
+              {isTyping && (
+                <div className="flex items-center space-x-2 text-gray-500 text-sm">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                  <span>{user?.firstName} est en train d'écrire...</span>
+                </div>
+              )}
             </div>
-            <MessageInput onSendMessage={handleSendMessage} />
+            <MessageInput onSendMessage={handleSendMessage} matchId={matchId} receiverId={user?._id} />
           </>
         )}
       </div>

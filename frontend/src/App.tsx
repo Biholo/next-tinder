@@ -1,68 +1,59 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAppDispatch } from './hooks/useAppDispatch'
 import 'react-toastify/dist/ReactToastify.css'
- 
+
 import SwipeCards from '@/pages/SwipeCards'
 import Chat from '@/pages/Chat'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
 import Profile from '@/pages/Profile'
 import { AppSidebar } from '@/components/sidebar/app-sidebar'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { autoLogin } from '@/redux/slices/authSlice'
-import { useNavigate } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAppSelector } from './hooks/useAppSelector'
+import { WebSocketService } from '@/services/websocketService'
 import Loader from '@/components/loader/Loader'
-import { wsService } from '@/services/websocket'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAppSelector((state) => state.auth)
+  const { isAuthenticated, loading } = useAppSelector((state) => state.auth)
+
+  if (loading) {
+    return <Loader />
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" />
   }
+
   return children
 }
 
 function App() {
   const { isAuthenticated, loading } = useAppSelector((state) => state.auth)
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
-  const { user: currentUser } = useAppSelector((state) => state.auth)
+  const [checkingAuth, setCheckingAuth] = useState(true)
 
-  // Gestion de la connexion WebSocket
+  const wsService = new WebSocketService();
+
   useEffect(() => {
-    if (currentUser?._id && isAuthenticated) {
-      console.log('🔌 Tentative de connexion WebSocket...');
-      wsService.connect();
+    wsService.connect();
 
-      return () => {
-        console.log('👋 Déconnexion WebSocket...');
-        wsService.sendUserDisconnected(currentUser._id);
-        wsService.disconnect();
-      };
+    return () => {
+      wsService.disconnect();
     }
-  }, [currentUser?._id, isAuthenticated]);
-  
-  // Gestion de l'auto-login
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        await dispatch(autoLogin());
-        if (isAuthenticated) {
-          navigate('/');
-        }
-      } catch (error) {
-        navigate('/login');
-      }
-    };
-
-    initAuth();
   }, []);
 
-  if (loading) {
+  useEffect(() => {
+    const initAuth = async () => {
+      await dispatch(autoLogin())
+      setCheckingAuth(false) // Auth check terminé
+    }
+    initAuth()
+  }, [dispatch])
+
+  if (checkingAuth || loading) {
     return <Loader />
   }
 
@@ -82,31 +73,25 @@ function App() {
         />
         {isAuthenticated && <AppSidebar />}
         <Routes>
-          {isAuthenticated ? (
-            <>
-              <Route path="/" element={
-                <PrivateRoute>
-                  <SwipeCards />
-                </PrivateRoute>
-              } />
-              <Route path="/chat/:matchId" element={
-                <PrivateRoute>
-                  <Chat />
-                </PrivateRoute>
-              } />
-              <Route path="/profile" element={
-                <PrivateRoute>
-                  <Profile />
-                </PrivateRoute>
-              } />
-            </>
-          ) : (
-            <>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="*" element={<Navigate to="/login" />} />
-            </>
-          )}
+          <Route path="/" element={
+            <PrivateRoute>
+              <SwipeCards />
+            </PrivateRoute>
+          } />
+          <Route path="/chat/:matchId" element={
+            <PrivateRoute>
+              <Chat />
+            </PrivateRoute>
+          } />
+          <Route path="/profile" element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          } />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          {/* Éviter la redirection vers /login si `checkingAuth` est encore en cours */}
+          <Route path="*" element={isAuthenticated ? <Navigate to="/" /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </>

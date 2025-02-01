@@ -1,12 +1,21 @@
 import { useState } from "react"
 import { ImageIcon, Smile } from "lucide-react"
+import { wsService } from "@/services/websocketService"
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void
+  matchId: string
+  receiverId: string
 }
 
-export function MessageInput({ onSendMessage }: MessageInputProps) {
+export function MessageInput({ onSendMessage, matchId, receiverId }: MessageInputProps) {
   const [message, setMessage] = useState("")
+
+  const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newMessage = e.target.value
+    setMessage(newMessage)
+    wsService.sendTypingStatus(matchId, receiverId)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,7 +42,7 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
         </button>
         <input
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleMessageChange}
           className="flex-1 p-2 border rounded-full focus:outline-none focus:border-[#FF1B5B]"
           placeholder="Rédigez un message"
         />

@@ -2,12 +2,16 @@ import { formatMessageDate } from "@/utils/dateFormatter";
 import { Message } from "@/models";
 
 interface MessageBubbleProps {
-    message: Message;
-    isOwn: boolean;
+  message: {
+    content: string;
+    createdAt: Date | string | number;
+    senderId: string;
+  };
+  isOwn: boolean;
 }
 
 export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
-    const formattedDate = formatMessageDate(message.createdAt || new Date());
+  const formattedDate = formatMessageDate(message.createdAt || new Date());
 
     return (
         <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>

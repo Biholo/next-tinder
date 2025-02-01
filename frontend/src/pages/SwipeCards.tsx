@@ -5,9 +5,11 @@ import TinderCard from "react-tinder-card"
 import { Heart, Star, X, ChevronDown, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAppDispatch } from "@/hooks/useAppDispatch"
+import { useAppSelector } from "@/hooks/useAppSelector"
 import { getUsersToSwipe } from "@/redux/slices/userSlice"
 import { createSwipe } from "@/redux/slices/swipeSlice"
-import { WebSocketService } from "@/services/websocket"
+import { wsService } from "@/services/websocketService"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface Profile {
   _id: string
@@ -31,34 +33,37 @@ interface Profile {
   age: number
 }
 
-type Direction = "DISLIKE" | "LIKE" | "up"
+type Direction = 'left' | 'right' | 'up' | 'down';
+type SwipeDirection = "DISLIKE" | "LIKE" | "up";
+
+interface MatchEvent {
+  event: 'new_match'
+  user: Profile
+}
+
+interface TinderCardRef {
+  swipe: (dir: Direction) => void;
+}
 
 export default function SwipeCards() {
-  const [lastDirection, setLastDirection] = useState<Direction | null>(null)
   const [profileIndex, setProfileIndex] = useState(0)
   const [imageIndex, setImageIndex] = useState(0)
   const [isContentVisible, setIsContentVisible] = useState(false)
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [showMatch, setShowMatch] = useState(false)
+  const [matchedUser, setMatchedUser] = useState<Profile | null>(null)
 
   const dispatch = useAppDispatch()
 
   const currentProfiles = profiles.slice(profileIndex)
 
-  type TinderCardRef = {
-    swipe: (dir: Direction) => void
-  }
   const cardRefs = useRef<(TinderCardRef | null)[]>([])
 
   useEffect(() => {
     const fetchProfiles = async () => {
-      try {
-        const response = await dispatch(getUsersToSwipe())
-        if (response.payload) {
-          setProfiles(response.payload)
-          console.log('Nous avons récupéré', response.payload.length, 'profils')
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement des profils:", error)
+      const response = await dispatch(getUsersToSwipe())
+      if (response.payload && Array.isArray(response.payload)) {
+        setProfiles(response.payload)
       }
     }
     fetchProfiles()
@@ -68,30 +73,51 @@ export default function SwipeCards() {
     cardRefs.current = new Array(currentProfiles.length).fill(null)
   }, [currentProfiles.length])
 
-  const swipe = (direction: Direction) => {
-    if (profileIndex >= profiles.length || !profiles[profileIndex]) return
+  useEffect(() => {
+    dispatch(getUsersToSwipe())
 
-    const currentCard = cardRefs.current[0]
+    // Écouter les nouveaux matches
+    const handleNewMatch = (data: MatchEvent) => {
+      if (data.event === 'new_match') {
+        setMatchedUser(data.user)
+        setShowMatch(true)
+        // Cacher la modale après 3 secondes
+        setTimeout(() => setShowMatch(false), 3000)
+      }
+    }
 
-    if (currentCard) {
-      currentCard.swipe(direction)
-      dispatch(
+    wsService.addEventListener('new_match', handleNewMatch as any)
+    return () => wsService.removeEventListener('new_match', handleNewMatch as any)
+  }, [dispatch])
+
+  const handleSwipe = async (direction: SwipeDirection) => {
+    
+    if (profileIndex < profiles.length) {
+      console.log(profiles[profileIndex]._id);
+      await dispatch(
         createSwipe({
           target_user_id: profiles[profileIndex]._id,
           direction: direction === "LIKE" ? "LIKE" : "DISLIKE",
-        }),
-  
+        })
+        
       )
-      WebSocketService
+      wsService.sendSwipe(profiles[profileIndex]._id, direction)
+      setProfileIndex((prev) => prev + 1)
     }
   }
 
-  const onSwipe = (direction: Direction, name: string) => {
-    setLastDirection(direction)
-    setProfileIndex((prev: number) => prev + 1)
-    setImageIndex(0)
-    setIsContentVisible(false)
-  }
+  const onSwipe = (direction: Direction) => {
+    const directionMap: Record<Direction, SwipeDirection> = {
+      left: "DISLIKE",
+      right: "LIKE",
+      up: "up",
+      down: "DISLIKE"
+    };
+    handleSwipe(directionMap[direction]);
+    setProfileIndex((prev: number) => prev + 1);
+    setImageIndex(0);
+    setIsContentVisible(false);
+  };
 
   const onCardLeftScreen = (name: string) => {
     console.log(`${name} a quitté l'écran`)
@@ -123,13 +149,16 @@ export default function SwipeCards() {
     }
   };
 
+
+
+  const currentUser = profiles[profileIndex]
+
   if (profiles.length === 0) {
     return <div className="flex items-center justify-center h-screen text-center">Aucun profil disponible</div>
   }
 
   // Vérifier si le profil courant existe et a des photos
-  const currentProfile = profiles[profileIndex];
-  if (!currentProfile?.photos?.length) {
+  if (!currentUser?.photos?.length) {
     return <div className="flex items-center justify-center h-screen">Aucune photo disponible</div>;
   }
 
@@ -141,7 +170,7 @@ export default function SwipeCards() {
             <TinderCard
               key={profile._id}
               ref={(el: TinderCardRef | null) => (cardRefs.current[0] = el)}
-              onSwipe={(dir: Direction) => onSwipe(dir, profile.firstName)}
+              onSwipe={(dir: Direction) => onSwipe(dir)}
               onCardLeftScreen={() => onCardLeftScreen(profile.firstName)}
               flickOnSwipe={true}
               preventSwipe={["down"]}
@@ -238,7 +267,7 @@ export default function SwipeCards() {
                     ? "border-green-500 text-green-500 hover:bg-green-50"
                     : "border-blue-500 text-blue-500 hover:bg-blue-50"
               }`}
-              onClick={() => swipe(direction as Direction)}
+              onClick={() => handleSwipe(direction as SwipeDirection)}
             >
               {direction === "DISLIKE" && <X className="h-6 w-6" />}
               {direction === "up" && <Star className="h-6 w-6" />}
@@ -259,7 +288,6 @@ export default function SwipeCards() {
           </Button>
           <Button
             variant="ghost"
-            size="sm"
             className="text-xs flex items-center gap-1 bg-white hover:bg-green-50 text-green-500"
           >
             <Heart className="h-4 w-4" />
@@ -267,7 +295,6 @@ export default function SwipeCards() {
             <kbd className="ml-1 px-1 py-0.5 text-[10px] font-mono bg-gray-100 rounded">→</kbd>
           </Button>
           <Button
-            variant="ghost"
             size="sm"
             className="text-xs flex items-center gap-1 bg-white hover:bg-blue-50 text-blue-500"
           >
@@ -277,6 +304,50 @@ export default function SwipeCards() {
           </Button>
         </div>
       </div>
+
+      {/* Modale de match */}
+      <AnimatePresence>
+        {showMatch && matchedUser && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+            <motion.div 
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center"
+            >
+              <div className="w-24 h-24 mx-auto mb-4 relative">
+                <div className="absolute -left-4 top-0 w-16 h-16 rounded-full overflow-hidden border-2 border-white">
+                  <img 
+                    src={currentUser?.photos[0]?.photoUrl || "/placeholder.svg"} 
+                    alt="Votre photo" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="absolute -right-4 top-0 w-16 h-16 rounded-full overflow-hidden border-2 border-white">
+                  <img 
+                    src={matchedUser.photos[0]?.photoUrl || "/placeholder.svg"} 
+                    alt={`Photo de ${matchedUser.firstName}`} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                  <Heart className="w-8 h-8 text-[#FF385C] fill-[#FF385C]" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold mb-4 text-[#FF385C]">C'est un Match !</h2>
+              <p className="text-gray-600 mb-6">
+                Vous et {matchedUser.firstName} vous êtes mutuellement appréciés !
+              </p>
+              <button 
+                className="px-6 py-2 bg-[#FF385C] text-white rounded-full hover:bg-[#FF385C]/90 transition"
+                onClick={() => setShowMatch(false)}
+              >
+                Continuer à swiper
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

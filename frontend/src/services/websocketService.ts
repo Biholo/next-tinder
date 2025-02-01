@@ -3,8 +3,10 @@ import {
   MessageEvent, 
   SwipeEvent, 
   UserConnectionEvent,
-  WebSocketEventType 
+  WebSocketEventType,
+  RequestOnlineStatusEvent
 } from '@/models';
+
 import Cookies from 'js-cookie';
 
 type WebSocketCallback = (data: WebSocketEvent) => void;
@@ -16,43 +18,69 @@ export class WebSocketService {
   private listeners: Map<string, WebSocketCallback[]> = new Map();
 
   connect() {
+    console.log('🔍 Début de la tentative de connexion WebSocket');
+    
     if (this.ws?.readyState === WebSocket.OPEN) {
-      console.log('🟢 WebSocket déjà connecté');
+      console.log('🟢 WebSocket déjà connecté. ReadyState:', this.ws.readyState);
       return;
     }
 
     const token = Cookies.get('accessToken');
+    console.log('🔑 Vérification du token:', token ? 'Token présent' : 'Token absent');
+    
     if (!token) {
-      console.error('❌ Token non trouvé');
+      console.error('❌ Token non trouvé dans les cookies');
       return;
     }
 
-    console.log('🔄 Tentative de connexion WebSocket...');
-    this.ws = new WebSocket(`ws://localhost:3001?token=${token}`);
+    const wsUrl = `ws://localhost:3001?token=${token}`;
+    console.log('🌐 Tentative de connexion à:', wsUrl);
+    
+    try {
+      this.ws = new WebSocket(wsUrl);
+      console.log('🔄 Instance WebSocket créée. État initial:', this.ws.readyState);
 
-    this.ws.onopen = () => {
-      console.log('✅ WebSocket connecté');
-      this.reconnectAttempts = 0;
-    };
+      this.ws.onopen = () => {
+        console.log('✅ WebSocket connecté avec succès. ReadyState:', this.ws?.readyState);
+        this.reconnectAttempts = 0;
+      };
 
-    this.ws.onmessage = (event) => {
-      try {
-        const data: WebSocketEvent = JSON.parse(event.data);
-        console.log('📥 Message WebSocket reçu:', data.event, data);
-        this.notifyListeners(data.event, data);
-      } catch (error) {
-        console.error('❌ Erreur de parsing WebSocket:', error);
-      }
-    };
+      this.ws.onmessage = (event) => {
+        try {
+          const data: WebSocketEvent = JSON.parse(event.data);
+          console.log('📥 Message WebSocket reçu:', {
+            event: data.event,
+            data: data,
+            timestamp: new Date().toISOString()
+          });
+          this.notifyListeners(data.event, data);
+        } catch (error) {
+          console.error('❌ Erreur de parsing WebSocket:', error);
+          console.log('📦 Données brutes reçues:', event.data);
+        }
+      };
 
-    this.ws.onclose = (event) => {
-      console.log('🔌 WebSocket déconnecté', event.code, event.reason);
-      this.attemptReconnect();
-    };
+      this.ws.onclose = (event) => {
+        console.log('🔌 WebSocket déconnecté', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+          timestamp: new Date().toISOString()
+        });
+        this.attemptReconnect();
+      };
 
-    this.ws.onerror = (error) => {
-      console.error('❌ Erreur WebSocket:', error);
-    };
+      this.ws.onerror = (error) => {
+        console.error('❌ Erreur WebSocket:', {
+          error,
+          readyState: this.ws?.readyState,
+          timestamp: new Date().toISOString()
+        });
+      };
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la création du WebSocket:', error);
+    }
   }
 
   private attemptReconnect() {
@@ -129,14 +157,35 @@ export class WebSocketService {
       match_id: matchId,
       receiver_id: receiverId
     });
+  
     console.log('⌨️ Statut de frappe envoyé');
   }
 
   private send(data: WebSocketEvent) {
+    console.log('📤 Tentative d\'envoi de message WebSocket:', {
+      event: data.event,
+      readyState: this.ws?.readyState,
+      timestamp: new Date().toISOString()
+    });
+    
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
+      console.log('✅ Message envoyé avec succès');
     } else {
-      console.error('❌ WebSocket non connecté. État:', this.ws?.readyState);
+      console.error('❌ WebSocket non connecté. État:', {
+        readyState: this.ws?.readyState,
+        readyStateText: this.getReadyStateText(this.ws?.readyState)
+      });
+    }
+  }
+
+  private getReadyStateText(readyState: number | undefined): string {
+    switch (readyState) {
+      case WebSocket.CONNECTING: return 'CONNECTING (0)';
+      case WebSocket.OPEN: return 'OPEN (1)';
+      case WebSocket.CLOSING: return 'CLOSING (2)';
+      case WebSocket.CLOSED: return 'CLOSED (3)';
+      default: return 'UNDEFINED';
     }
   }
 
@@ -149,12 +198,27 @@ export class WebSocketService {
     this.send(message);
 }
 
+
   public sendUserDisconnected(userId: string) {
     const message: UserConnectionEvent = {
         event: 'user_disconnected',
         user_id: userId
     };
     this.send(message);
+  }
+
+  public requestOnlineStatus() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.error('❌ WebSocket non connecté');
+      return;
+    }
+
+    const event: RequestOnlineStatusEvent = {
+      event: 'request_online_status',
+    };
+
+    this.send(event);
+    console.log('📤 Demande des statuts en ligne envoyée');
   }
 
   public disconnect() {

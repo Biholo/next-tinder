@@ -11,6 +11,8 @@ export type WebSocketEventType =
     | 'user_typing_display'
     | 'notification'
     | 'swipe'
+    | 'online_status'
+    | 'request_online_status'
     | 'user_connected'
     | 'user_disconnected';
 
@@ -70,6 +72,8 @@ export type WebSocketEvent =
     | TypingEvent 
     | MatchEvent 
     | ConnectEvent
+    | OnlineStatusEvent
+    | RequestOnlineStatusEvent
     | SwipeEvent
     | UserConnectionEvent;
 
@@ -108,3 +112,13 @@ export interface WebSocketNotification {
     data: any;
     created_at: string;
 }
+
+export interface RequestOnlineStatusEvent {
+    event: 'request_online_status';
+  }
+  
+  export interface OnlineStatusEvent {
+    event: 'online_status';
+    userId: string;
+    onlineStatuses: Array<{ userId: string; isOnline: boolean }>;
+  }
