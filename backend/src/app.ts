@@ -56,7 +56,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // Lancer le serveur
 const PORT = process.env.PORT || 8001;
 server.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:${PORT}`);
+  console.log(`Serveur démarré sur http://0.0.0.0:${PORT}`);
 });
 
 export const wsManager = new WebSocketManager();

@@ -78,8 +78,8 @@ const otherUsersPhotos = otherUsers.flatMap(user =>
     }))
 );
 
-// Génération des swipes pour 200 matches
-const swipes = otherUsers.slice(0, 200).flatMap(user => [
+// Génération des swipes pour 50 matches au lieu de 200
+const swipes = otherUsers.slice(0, 50).flatMap(user => [
     {
         _id: new ObjectId(),
         userId: mainUser._id,
@@ -98,8 +98,8 @@ const swipes = otherUsers.slice(0, 200).flatMap(user => [
     }
 ]);
 
-// Création des 200 matches
-const matches = otherUsers.slice(0, 200).map(user => ({
+// Création des 50 matches au lieu de 200
+const matches = otherUsers.slice(0, 50).map(user => ({
     _id: new ObjectId(),
     user1_id: mainUser._id,
     user2_id: user._id,
