@@ -32,6 +32,7 @@ export const getProfilesToSwipe: TypedRequestHandler = async (req, res) => {
       const swipedUsers = await SwipeModel.find({ 
         userId: currentUser.id 
       }).distinct('targetId');
+
   
       // Récupérer les IDs des matchs existants
       const matches = await MatchModel.find({

@@ -121,7 +121,7 @@ export default function SwipeCards() {
   };
 
   if (profiles.length === 0) {
-    return <div className="flex items-center justify-center h-screen">Chargement des profils...</div>
+    return <div className="flex items-center justify-center h-screen text-center">Aucun profil disponible</div>
   }
 
   // Vérifier si le profil courant existe et a des photos
@@ -141,7 +141,6 @@ export default function SwipeCards() {
               onSwipe={(dir: Direction) => onSwipe(dir, profile.firstName)}
               onCardLeftScreen={() => onCardLeftScreen(profile.firstName)}
               flickOnSwipe={true}
-              
               preventSwipe={["down"]}
               className="absolute w-[90%] max-w-md h-[70vh]"
             >

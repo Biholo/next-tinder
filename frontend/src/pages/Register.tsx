@@ -35,7 +35,8 @@ export default function Register() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (errorMessage && errorMessage !== "Aucun token trouvé") {
+    console.log('errorMessage', errorMessage);
+    if (errorMessage && errorMessage !== "te") {
       setConnectionError(errorMessage)
     } else {
       setConnectionError(null)

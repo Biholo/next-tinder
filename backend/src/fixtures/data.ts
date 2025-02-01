@@ -16,7 +16,7 @@ const mainUser = {
     firstName: "Admin",
     lastName: "IPSSI",
     email: "admin@ipssi.fr",
-    password: hashPassword("adminpassword"),
+    password: hashPassword("password"),
     gender: "male",
     dateOfBirth: new Date("1990-01-01"),
     bio: "Compte administrateur principal",
@@ -32,7 +32,28 @@ const mainUser = {
     updatedAt: new Date()
 };
 
-// Génération de 250 utilisateurs (pour avoir assez d'utilisateurs pour 200 matches)
+const secondUser = {
+    _id: new ObjectId(),
+    firstName: "Marie",
+    lastName: "Dupont",
+    email: "marie@dupont.fr",
+    password: hashPassword("password"),
+    gender: "female",
+    dateOfBirth: new Date("1995-01-01"),
+    bio: "Je suis une jeune femme de 28 ans qui aime voyager et découvrir de nouvelles cultures.",
+    location: "Paris",
+    preferences: {
+        gender: "female",
+        ageRange: {
+            min: 20,
+            max: 40
+        }
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+}
+
+// Génération de 2 utilisateurs (pour avoir assez d'utilisateurs pour 2 matches)
 const otherUsers = Array.from({ length: 2 }, () => {
     const gender = faker.helpers.arrayElement(['male', 'female']) as 'male' | 'female';
     const firstName = gender === 'male' ? faker.person.firstName('male') : faker.person.firstName('female');
@@ -41,7 +62,7 @@ const otherUsers = Array.from({ length: 2 }, () => {
         firstName,
         lastName: faker.person.lastName(),
         email: faker.internet.email(),
-        password: hashPassword(faker.internet.password()),
+        password: hashPassword("password"),
         gender,
         dateOfBirth: faker.date.between({ from: '1980-01-01', to: '2000-12-31' }),
         bio: faker.lorem.paragraph(),
@@ -62,7 +83,16 @@ const otherUsers = Array.from({ length: 2 }, () => {
 const mainUserPhotos = Array.from({ length: 3 }, (_, index) => ({
     _id: new ObjectId(),
     userId: mainUser._id,
-    photoUrl: `https://picsum.photos/500/600?random=${index}`,
+    photoUrl: `https://picsum.photos/400/600?random=${index}`,
+    createdAt: new Date(),
+    updatedAt: new Date()
+}));
+
+// Photos pour le compte principal (utilisant des images réelles de placeholder)
+const secondUserPhotos = Array.from({ length: 3 }, (_, index) => ({
+    _id: new ObjectId(),
+    userId: secondUser._id,
+    photoUrl: `https://picsum.photos/400/600?random=${index}`,
     createdAt: new Date(),
     updatedAt: new Date()
 }));
@@ -72,14 +102,14 @@ const otherUsersPhotos = otherUsers.flatMap(user =>
     Array.from({ length: faker.number.int({ min: 1, max: 5 }) }, (_, index) => ({
         _id: new ObjectId(),
         userId: user._id,
-        photoUrl: `https://picsum.photos/500/600?random=${user._id.toString()}${index}`,
+        photoUrl: `https://picsum.photos/400/600?random=${user._id.toString()}${index}`,
         createdAt: faker.date.past(),
         updatedAt: faker.date.recent()
     }))
 );
 
-// Génération des swipes pour 50 matches au lieu de 200
-const swipes = otherUsers.slice(0, 50).flatMap(user => [
+// Génération des swipes pour 200 matches
+const swipes = otherUsers.slice(0, 200).flatMap(user => [
     {
         _id: new ObjectId(),
         userId: mainUser._id,
@@ -98,8 +128,8 @@ const swipes = otherUsers.slice(0, 50).flatMap(user => [
     }
 ]);
 
-// Création des 50 matches au lieu de 200
-const matches = otherUsers.slice(0, 50).map(user => ({
+// Création des 200 matches
+const matches = otherUsers.slice(0, 200).map(user => ({
     _id: new ObjectId(),
     user1_id: mainUser._id,
     user2_id: user._id,
@@ -125,8 +155,8 @@ const messages = matches
     );
 
 export const fixtures = {
-    users: [mainUser, ...otherUsers],
-    photos: [...mainUserPhotos, ...otherUsersPhotos],
+    users: [mainUser, secondUser, ...otherUsers],
+    photos: [...mainUserPhotos, ...secondUserPhotos, ...otherUsersPhotos],
     swipes,
     matches,
     messages
