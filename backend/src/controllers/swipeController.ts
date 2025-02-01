@@ -11,11 +11,7 @@ export const createSwipe: TypedRequestHandler = async (req, res) => {
   try {
     const user = req.user;
     const { target_user_id, direction } = req.body;
-
-    console.log('User: ', user)
-    console.log('Target user id: ', target_user_id)
-    console.log('Direction: ', direction)
-
+    
     // Vérifier si un swipe existe déjà
     const existingSwipe = await SwipeModel.findOne({
       userId: user.id,

@@ -30,7 +30,16 @@ export interface UserCreation {
 class AuthService {
 
     public async registerUser(user: UserCreation): Promise<any> {
-        return api.fetchRequest(`/api/auth/register`, 'POST', user);
+        const response = await api.fetchRequest(`/api/auth/register`, 'POST', user);
+
+        if (response.access_token) {
+            Cookies.set('accessToken', response.access_token, { expires: 1 }); // expire dans 1 jour
+        }
+        if (response.refresh_token) {
+            Cookies.set('refreshToken', response.refresh_token, { expires: 7 }); // expire dans 7 jours
+        }
+
+        return response;
     }
 
     public async loginUser(user: Login): Promise<any> {

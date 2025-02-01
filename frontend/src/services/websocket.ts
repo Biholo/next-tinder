@@ -24,7 +24,6 @@ export class WebSocketService {
 
 
     this.ws.onopen = () => {
-      console.log('WebSocket connecté');
       this.reconnectAttempts = 0;
     };
 
@@ -38,7 +37,6 @@ export class WebSocketService {
     };
 
     this.ws.onclose = () => {
-      console.log('WebSocket déconnecté');
       this.attemptReconnect();
     };
 
