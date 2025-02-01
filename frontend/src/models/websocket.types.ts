@@ -10,11 +10,53 @@ export type WebSocketEventType =
     | 'user_typing_display'
     | 'notification';
 
-export interface WebSocketEvent {
+// Base event type
+export interface BaseWebSocketEvent {
     event: WebSocketEventType;
-    [key: string]: any;
 }
 
+// Event types spécifiques
+export interface MessageEvent extends BaseWebSocketEvent {
+    match_id: string;
+    sender_id?: string;
+    receiver_id?: string;
+    content: string;
+    message_id?: string;
+    created_at?: string;
+}
+
+export interface MessageReadEvent extends BaseWebSocketEvent {
+    match_id: string;
+    message_id: string;
+    reader_id?: string;
+    sender_id?: string;
+}
+
+export interface TypingEvent extends BaseWebSocketEvent {
+    match_id: string;
+    sender_id?: string;
+    receiver_id: string;
+}
+
+export interface MatchEvent extends BaseWebSocketEvent {
+    match_id: string;
+    user1_id: string;
+    user2_id: string;
+}
+
+export interface ConnectEvent extends BaseWebSocketEvent {
+    message: string;
+}
+
+// Union type pour tous les événements possibles
+export type WebSocketEvent = 
+    | MessageEvent 
+    | MessageReadEvent 
+    | TypingEvent 
+    | MatchEvent 
+    | ConnectEvent;
+
+// Types de données
 export interface WebSocketMessage {
     match_id: string;
     sender_id: string;
