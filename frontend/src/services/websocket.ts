@@ -1,11 +1,13 @@
 import { WebSocketEvent, MessageEvent, UserStatusEvent } from '@/models/websocket';
 import Cookies from 'js-cookie';
 
+type WebSocketCallback = (data: WebSocketEvent) => void;
+
 export class WebSocketService {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private listeners: Map<string, Function[]> = new Map();
+  private listeners: Map<string, WebSocketCallback[]> = new Map();
 
   connect() {
     if (this.ws?.readyState === WebSocket.OPEN) {
@@ -63,7 +65,7 @@ export class WebSocketService {
     }, delay);
   }
 
-  public addEventListener(event: string, callback: Function) {
+  public addEventListener(event: string, callback: WebSocketCallback) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, []);
     }
@@ -71,7 +73,7 @@ export class WebSocketService {
     console.log(`👂 Écouteur ajouté pour l'événement: ${event}`);
   }
 
-  public removeEventListener(event: string, callback: Function) {
+  public removeEventListener(event: string, callback: WebSocketCallback) {
     const callbacks = this.listeners.get(event);
     if (callbacks) {
       const index = callbacks.indexOf(callback);
@@ -82,7 +84,7 @@ export class WebSocketService {
     }
   }
 
-  private notifyListeners(event: string, data: any) {
+  private notifyListeners(event: string, data: WebSocketEvent) {
     console.log(`📢 Notification des écouteurs pour l'événement: ${event}`);
     const callbacks = this.listeners.get(event);
     callbacks?.forEach(callback => callback(data));
@@ -156,4 +158,4 @@ export class WebSocketService {
   }
 }
 
-export const wsService = new WebSocketService(); 
+export const wsService = new WebSocketService();
