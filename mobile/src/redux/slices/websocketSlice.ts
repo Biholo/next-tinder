@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TypingEvent, MessageEvent, MatchEvent, MessageReadEvent } from '@/models/websocket';
 
-interface WebSocketState {
-  typingUsers: Record<string, boolean>;
-  onlineUsers: Record<string, boolean>;
+interface WebsocketState {
+  onlineUsers: { [key: string]: boolean };
+  typingStates: { [key: string]: boolean };
   readMessages: Record<string, string[]>; // matchId -> messageIds[]
   lastMessages: Record<string, {
     content: string;
@@ -13,9 +13,9 @@ interface WebSocketState {
   isConnected: boolean;
 }
 
-const initialState: WebSocketState = {
-  typingUsers: {},
+const initialState: WebsocketState = {
   onlineUsers: {},
+  typingStates: {},
   readMessages: {},
   lastMessages: {},
   isConnected: false
@@ -25,17 +25,14 @@ const websocketSlice = createSlice({
   name: 'websocket',
   initialState,
   reducers: {
-    setTypingStatus: (state, action: PayloadAction<{ matchId: string; isTyping: boolean }>) => {
-      state.typingUsers = {
-        ...state.typingUsers,
-        [action.payload.matchId]: action.payload.isTyping
-      };
+    setOnlineUsers: (state, action: PayloadAction<{ [key: string]: boolean }>) => {
+      state.onlineUsers = action.payload;
     },
-    setUserOnlineStatus: (state, action: PayloadAction<{ userId: string; isOnline: boolean }>) => {
-      state.onlineUsers = {
-        ...state.onlineUsers,
-        [action.payload.userId]: action.payload.isOnline
-      };
+    updateOnlineStatus: (state, action: PayloadAction<{ userId: string; isOnline: boolean }>) => {
+      state.onlineUsers[action.payload.userId] = action.payload.isOnline;
+    },
+    setTypingState: (state, action: PayloadAction<{ matchId: string; isTyping: boolean }>) => {
+      state.typingStates[action.payload.matchId] = action.payload.isTyping;
     },
     addReadMessage: (state, action: PayloadAction<{ matchId: string; messageId: string }>) => {
       const currentMessages = state.readMessages[action.payload.matchId] || [];
@@ -63,15 +60,16 @@ const websocketSlice = createSlice({
       state.isConnected = action.payload;
     },
     clearTypingStatus: (state, action: PayloadAction<string>) => {
-      const { [action.payload]: _, ...rest } = state.typingUsers;
-      state.typingUsers = rest;
+      const { [action.payload]: _, ...rest } = state.typingStates;
+      state.typingStates = rest;
     }
   }
 });
 
 export const {
-  setTypingStatus,
-  setUserOnlineStatus,
+  setOnlineUsers,
+  updateOnlineStatus,
+  setTypingState,
   addReadMessage,
   setLastMessage,
   setConnectionStatus,

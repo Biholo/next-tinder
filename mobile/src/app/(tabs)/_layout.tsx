@@ -51,18 +51,6 @@ export default function TabsLayout() {
         }} 
       />
       <Tabs.Screen 
-        name="likes" 
-        options={{ 
-          title: "Likes",
-          tabBarIcon: ({ color }) => (
-            <View className="relative">
-            <Ionicons name="heart-outline" size={24} color={color} />
-            <View className="absolute -right-1 -top-1 bg-pink-500 rounded-full w-2 h-2" />
-            </View>
-          )
-        }} 
-      />
-      <Tabs.Screen 
         name="chat" 
         options={{ 
           title: "Messages",
