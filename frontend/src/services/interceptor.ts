@@ -5,7 +5,7 @@ class BackendApi {
     private url: string;
 
     constructor() {
-        this.url = import.meta.env.VITE_API_BASE_URL as string || 'http://localhost:8000';
+        this.url = import.meta.env.VITE_API_BASE_URL as string;
     }
 
     public getUrl(): string {
