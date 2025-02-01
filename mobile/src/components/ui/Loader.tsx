@@ -6,7 +6,7 @@ interface LoaderProps {
   color?: string
 }
 
-export default function Loader({ size = 50, color = "#FF4458" }: LoaderProps) {
+export function Loader({ size = 50, color = "#FF4458" }: LoaderProps) {
   const spinValue = useRef(new Animated.Value(0)).current
 
   useEffect(() => {

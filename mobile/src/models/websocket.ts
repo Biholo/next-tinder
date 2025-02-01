@@ -10,6 +10,8 @@ export type WebSocketEventType =
   | 'user_typing_display'
   | 'notification'
   | 'swipe'
+  | 'online_status'
+  | 'request_online_status'
   | 'user_connected'
   | 'user_disconnected';
 
@@ -102,10 +104,23 @@ export interface ConnectEvent extends BaseWebSocketEvent {
   message: string;
 }
 
+export interface OnlineStatusEvent extends BaseWebSocketEvent {
+  event: 'online_status';
+  userId: string;
+  onlineStatuses: Array<{ userId: string; isOnline: boolean }>;
+}
+
+export interface RequestOnlineStatusEvent extends BaseWebSocketEvent {
+  event: 'request_online_status';
+  userId: string;
+}
+
 export type WebSocketEvent = 
   | MessageEvent 
   | MessageReadEvent 
   | TypingEvent 
   | MatchEvent 
   | ConnectEvent
-  | UserStatusEvent;
+  | UserStatusEvent
+  | OnlineStatusEvent
+  | RequestOnlineStatusEvent;

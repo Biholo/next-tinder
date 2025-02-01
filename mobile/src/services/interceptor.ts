@@ -1,13 +1,13 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthResponse } from '@/models/auth.types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '@env';
 
 class BackendApi {
     private url: string;
 
     constructor() {
-        this.url = process.env.VITE_API_BASE_URL as string || 'http://192.168.186.92:3000';
+        this.url = API_BASE_URL;
     }
-
 
     public getUrl(): string {
         return this.url;
@@ -16,7 +16,6 @@ class BackendApi {
     private async createHeaders(includeAuth: boolean = false, isFormData: boolean = false): Promise<HeadersInit> {
         const headers: HeadersInit = {};
         
-
         if (!isFormData) {
             headers['Content-Type'] = 'application/json';
         }
@@ -58,7 +57,7 @@ class BackendApi {
         
         const options: RequestInit = {
             method,
-            headers: this.createHeaders(includeAuth, isFormData),
+            headers: await this.createHeaders(includeAuth, isFormData),
         };
 
         if (body) {
@@ -66,20 +65,7 @@ class BackendApi {
         }
 
         try {
-            // console.log('Request URL:', fullUrl);
-            // console.log('Request options:', {
-            //     ...options,
-            //     headers: Object.fromEntries(Object.entries(options.headers || {}))
-            // });
-            // console.log('Request body:', body);
-
-            console.log(options);
-            
             let response = await fetch(fullUrl, options);
-            
-            // console.log('Response status:', response.status);
-            // const responseData = await response.clone().json().catch(() => null);
-            // console.log('Response data:', responseData);
             
             response = await this.handleUnauthorizedRequest(response, () => 
                 this.fetchRequest(endpoint, method, body, includeAuth)
@@ -107,14 +93,12 @@ class BackendApi {
         const response = await this.fetchRequest('/api/auth/refresh', 'POST', { token: refresh_token });
 
         if (response.token) {
-            AsyncStorage.setItem('accessToken', response.token);
+            await AsyncStorage.setItem('accessToken', response.token);
         }
-
 
         if (response.refresh_token) {
-            AsyncStorage.setItem('refreshToken', response.refresh_token);
+            await AsyncStorage.setItem('refreshToken', response.refresh_token);
         }
-
 
         return response || null;
     }
