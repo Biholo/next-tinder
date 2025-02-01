@@ -171,7 +171,7 @@ export const insertFixtures = async () => {
             UserPhotoModel.deleteMany({}),
             SwipeModel.deleteMany({}),
             MatchModel.deleteMany({}),
-            MessageModel.deleteMany({})
+            MessageModel.deleteMany({}),
         ]);
 
         // Insertion des nouvelles données

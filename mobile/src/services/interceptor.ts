@@ -1,26 +1,28 @@
-import Cookies from 'js-cookie';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthResponse } from '@/models/auth.types';
 
 class BackendApi {
     private url: string;
 
     constructor() {
-        this.url = import.meta.env.VITE_API_BASE_URL as string || 'http://localhost:8000';
+        this.url = process.env.VITE_API_BASE_URL as string || 'http://192.168.186.92:3000';
     }
+
 
     public getUrl(): string {
         return this.url;
     }
 
-    private createHeaders(includeAuth: boolean = false, isFormData: boolean = false): HeadersInit {
+    private async createHeaders(includeAuth: boolean = false, isFormData: boolean = false): Promise<HeadersInit> {
         const headers: HeadersInit = {};
         
+
         if (!isFormData) {
             headers['Content-Type'] = 'application/json';
         }
         
         if (includeAuth) {
-            const token = Cookies.get('accessToken');
+            const token = await AsyncStorage.getItem('accessToken');
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
@@ -32,7 +34,7 @@ class BackendApi {
     // Gestion des erreurs 401 et retry
     private async handleUnauthorizedRequest(response: Response, retryRequest: () => Promise<Response>): Promise<Response> {
         if (response.status === 401) {
-            const refreshToken = Cookies.get('refreshToken');
+            const refreshToken = await AsyncStorage.getItem('refreshToken');
             if (refreshToken) {
                 const newToken = await this.getNewAccessToken(refreshToken);
                 
@@ -71,6 +73,8 @@ class BackendApi {
             // });
             // console.log('Request body:', body);
 
+            console.log(options);
+            
             let response = await fetch(fullUrl, options);
             
             // console.log('Response status:', response.status);
@@ -103,12 +107,14 @@ class BackendApi {
         const response = await this.fetchRequest('/api/auth/refresh', 'POST', { token: refresh_token });
 
         if (response.token) {
-            Cookies.set('accessToken', response.token, { expires: 1 }); // expire dans 1 jour
+            AsyncStorage.setItem('accessToken', response.token);
         }
 
+
         if (response.refresh_token) {
-            Cookies.set('refreshToken', response.refresh_token, { expires: 7 }); // expire dans 7 jours
+            AsyncStorage.setItem('refreshToken', response.refresh_token);
         }
+
 
         return response || null;
     }

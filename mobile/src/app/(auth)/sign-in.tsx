@@ -2,14 +2,17 @@ import { useState } from "react"
 import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
 import { useRouter } from "expo-router"
 import { CustomInput, GradientBackground, GradientButton } from "../../components"
+import { login } from "@/redux/slices/authSlice"
+import { useAppDispatch } from "@/hooks/useAppDispatch"
 
 export default function SignInScreen() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const dispatch = useAppDispatch()
 
   const handleLogin = () => {
-    // Logique de connexion (ex: Firebase, API...)
+    dispatch(login({ email, password }))
     router.replace("/(tabs)")
   }
 
