@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMatch extends Document {
+    _id: string;
     user1_id: string;
     user2_id: string;
     createdAt: Date;

@@ -8,10 +8,24 @@ export type WebSocketEventType =
   | 'new_match'
   | 'user_typing'
   | 'user_typing_display'
-  | 'notification';
+  | 'notification'
+  | 'swipe'
+  | 'user_connected'
+  | 'user_disconnected';
 
 export interface BaseWebSocketEvent {
   event: WebSocketEventType;
+}
+
+export interface UserStatusEvent extends BaseWebSocketEvent {
+  event: 'user_connected' | 'user_disconnected';
+  user_id: string;
+}
+
+export interface SwipeEvent extends BaseWebSocketEvent {
+  event: 'swipe';
+  target_user_id: string;
+  direction: 'LIKE' | 'DISLIKE';
 }
 
 export interface MessageEvent extends BaseWebSocketEvent {
@@ -37,9 +51,18 @@ export interface TypingEvent extends BaseWebSocketEvent {
 }
 
 export interface MatchEvent extends BaseWebSocketEvent {
+  event: 'new_match';
   match_id: string;
-  user1_id: string;
-  user2_id: string;
+  user: {
+    _id: string;
+    photos: Array<{ _id: string, photoUrl: string }>;
+    age: number;
+    firstName?: string;
+    lastName?: string;
+    [key: string]: any;
+  };
+  lastMessage: any | null;
+  createdAt: Date;
 }
 
 export interface ConnectEvent extends BaseWebSocketEvent {
@@ -51,7 +74,9 @@ export type WebSocketEvent =
   | MessageReadEvent 
   | TypingEvent 
   | MatchEvent 
-  | ConnectEvent;
+  | ConnectEvent
+  | SwipeEvent
+  | UserStatusEvent;
 
 export interface Message {
   match_id: string;

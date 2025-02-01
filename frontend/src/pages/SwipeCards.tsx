@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useAppDispatch } from "@/hooks/useAppDispatch"
 import { getUsersToSwipe } from "@/redux/slices/userSlice"
 import { createSwipe } from "@/redux/slices/swipeSlice"
+import { WebSocketService } from "@/services/websocket"
 
 interface Profile {
   _id: string
@@ -79,7 +80,9 @@ export default function SwipeCards() {
           target_user_id: profiles[profileIndex]._id,
           direction: direction === "LIKE" ? "LIKE" : "DISLIKE",
         }),
+  
       )
+      WebSocketService
     }
   }
 
