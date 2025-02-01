@@ -9,3 +9,6 @@ package-lock.json
 /backend/package.json
 tinder-app
 .DS_Store
+
+/mobile/node_modules
+/mobile-tinder
