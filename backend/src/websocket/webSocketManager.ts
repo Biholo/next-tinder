@@ -29,7 +29,7 @@ export class WebSocketManager {
 
   constructor() {
     this.wss = new WebSocketServer({ 
-        port: parseInt(process.env.WEBSOCKET_PORT || '3001', 10)
+        port: process.env.WEBSOCKET_PORT ? parseInt(process.env.WEBSOCKET_PORT, 10) : 3001
      });
     this.clients = new Map();
     this.matchService = new MatchService();
@@ -51,15 +51,20 @@ export class WebSocketManager {
 
         const decoded = await verifyToken(token);
         console.log('🔌 Decoded:', decoded);
+        // console.log('🔌 Decoded:', decoded);
         ws.userId = decoded.id;
         ws.isAlive = true;
 
         // Ajouter le client à la map
         this.clients.set(decoded.id, ws);
-        console.log('🔌 Client ajouté à la map:', decoded.id);
 
         // Notifier les matches de la connexion
         await this.notifyUserConnected(decoded.id);
+
+        // Récupér les utilisateurs connectés
+        await this.handleRequestOnlineStatus(ws);
+
+
 
         // Gérer les messages
         ws.on('message', (data: string) => this.handleMessage(ws, data));
@@ -83,7 +88,7 @@ export class WebSocketManager {
         authWs.isAlive = false;
         authWs.ping();
       });
-    }, parseInt(process.env.PING_INTERVAL || '30000', 10));
+    }, 30000);
   }
 
   private async handleMessage(ws: AuthenticatedWebSocket, data: string) {
@@ -94,6 +99,7 @@ export class WebSocketManager {
 
       switch (event.event) {
         case 'send_message':
+          console.log('🔍 send_message:', event)
           await this.handleSendMessage(ws, event as MessageEvent);
           break;
         case 'message_read':
@@ -109,7 +115,7 @@ export class WebSocketManager {
           this.handleUserDisconnected(ws, event as UserStatusEvent);
           break;
         case 'request_online_status':
-          this.handleRequestOnlineStatus(ws, event as RequestOnlineStatusEvent);
+          this.handleRequestOnlineStatus(ws);
           break;
 
       }
@@ -118,7 +124,7 @@ export class WebSocketManager {
     }
   }
 
-  private async handleRequestOnlineStatus(ws: AuthenticatedWebSocket, event: RequestOnlineStatusEvent) {
+  private async handleRequestOnlineStatus(ws: AuthenticatedWebSocket) {
     const userId = ws.userId;
     if (!userId) return;
 
@@ -136,6 +142,9 @@ export class WebSocketManager {
       userId: userId,
       onlineStatuses: onlineStatuses
     };
+
+    console.log('🔹 onlineStatusEvent:', onlineStatusEvent)
+    console.log('Send to user:', userId)
 
     this.sendToUser(userId, onlineStatusEvent);
   }
@@ -185,7 +194,8 @@ export class WebSocketManager {
       for (const otherUserId of matchedUserIds) {
         const statusEvent: UserStatusEvent = {
           event: 'user_connected',
-          user_id: userId
+          userId: userId,
+          onlineStatus: true
         };
 
         this.sendToUser(otherUserId, statusEvent);
@@ -205,7 +215,8 @@ export class WebSocketManager {
 
       const statusEvent: UserStatusEvent = {
         event: 'user_disconnected',
-        user_id: ws.userId
+        userId: ws.userId,
+        onlineStatus: false
       };
 
       for (const otherUserId of matchedUserIds) {
@@ -287,7 +298,8 @@ export class WebSocketManager {
       event: 'user_typing_display',
       match_id: event.match_id,
       sender_id: ws.userId,
-      receiver_id: event.receiver_id
+      receiver_id: event.receiver_id,
+      is_typing: event.is_typing
     };
     console.log('🔔 TypingEvent:', typingEvent);
     this.sendToUser(event.receiver_id, typingEvent);

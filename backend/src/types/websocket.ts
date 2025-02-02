@@ -21,7 +21,8 @@ export interface BaseWebSocketEvent {
 
 export interface UserStatusEvent extends BaseWebSocketEvent {
   event: 'user_connected' | 'user_disconnected';
-  user_id: string;
+  userId: string;
+  onlineStatus: boolean;
 }
 
 export interface SwipeEvent extends BaseWebSocketEvent {
@@ -50,6 +51,7 @@ export interface TypingEvent extends BaseWebSocketEvent {
   match_id: string;
   sender_id?: string;
   receiver_id: string;
+  is_typing: boolean;
 }
 
 export interface MatchEvent extends BaseWebSocketEvent {

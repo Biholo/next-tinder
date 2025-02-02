@@ -1,18 +1,24 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit"
 import MatchService from "@/services/matcheService"
 
+interface Match {
+    id: string;
+    userId: string;
+    name: string;
+    avatar: string;
+}
+
 interface MatchState {
-    loading: boolean
-    error: string | null
-    matches: any[]
+    matches: Match[];
+    loading: boolean;
+    error: string | null;
 }
 
 const initialState: MatchState = {
+    matches: [],
     loading: false,
-    error: null,
-    matches: []
-}
-
+    error: null
+};
 export const getMatches = createAsyncThunk('match/getMatches', async (_, { rejectWithValue }) => {
     try {
         const response = await MatchService.getMatches()
@@ -23,23 +29,26 @@ export const getMatches = createAsyncThunk('match/getMatches', async (_, { rejec
 })
 
 const matchSlice = createSlice({
-    name: "match",
+    name: "matches",
     initialState,
-    reducers: {},
+    reducers: {
+        removeMatch: (state, action: PayloadAction<string>) => {
+            state.matches = state.matches.filter(match => match.id !== action.payload);
+        }
+    },
     extraReducers: (builder) => {
-        builder.addCase(getMatches.pending, (state) => {
-            state.loading = true
-        })
-        .addCase(getMatches.fulfilled, (state, action) => {
-            state.loading = false
-            state.matches = action.payload
-        })
-        .addCase(getMatches.rejected, (state, action) => {
-            state.loading = false
-            state.error = action.payload as string
-        })
-    }
-})
+        builder.addCase(getMatches.fulfilled, (state, action) => {
+            let matches = action.payload
+            console.log(' 📥 Réponse du service de matches:', matches)
+            state.matches  = matches.map((match: any) => ({
+                id: match.match_id,
+                userId: match.user.id,
+                name: match.user.firstName + " " + match.user.lastName,
+                avatar: match.user.photos[0].photoUrl
+            }))
+        });
+    },
+});
 
-export default matchSlice.reducer
-
+export const { removeMatch } = matchSlice.actions;
+export default matchSlice.reducer;

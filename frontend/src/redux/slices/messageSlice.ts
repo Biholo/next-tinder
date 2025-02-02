@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import type { Match, Message, User } from '@/models/chat'
+import type { Match, Message, User } from '@/models'
 import MessageService from '@/services/messageService'
 import { createAsyncThunk } from '@reduxjs/toolkit'
 

@@ -12,14 +12,14 @@ export const generateToken = (user: IUser): string => {
       userId: user._id,
       email: user.email 
     },
-    process.env.JWT_SECRET || 'default_secret',
+    process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: '24h' }
   );
 };
 
 export const verifyToken = async (token: string): Promise<JwtPayload> => {
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || 'kfefekfe');
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     return decoded as JwtPayload;
   } catch (error) {
     throw new Error('Token invalide ou expiré');

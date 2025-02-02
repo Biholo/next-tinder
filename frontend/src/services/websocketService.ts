@@ -21,24 +21,20 @@ export class WebSocketService {
     console.log('🔍 Début de la tentative de connexion WebSocket');
     
     if (this.ws?.readyState === WebSocket.OPEN) {
-      console.log('🟢 WebSocket déjà connecté. ReadyState:', this.ws.readyState);
       return;
     }
 
     const token = Cookies.get('accessToken');
-    console.log('🔑 Vérification du token:', token ? 'Token présent' : 'Token absent');
     
     if (!token) {
-      console.error('❌ Token non trouvé dans les cookies');
       return;
     }
 
     const wsUrl = `${import.meta.env.VITE_API_BASE_URL_WS}?token=${token}`;
-    console.log('🌐 Tentative de connexion à:', wsUrl);
+    
     
     try {
       this.ws = new WebSocket(wsUrl);
-      console.log('🔄 Instance WebSocket créée. État initial:', this.ws.readyState);
 
       this.ws.onopen = () => {
         console.log('✅ WebSocket connecté avec succès. ReadyState:', this.ws?.readyState);
@@ -104,7 +100,6 @@ export class WebSocketService {
       this.listeners.set(event, []);
     }
     this.listeners.get(event)?.push(callback);
-    console.log(`👂 Écouteur ajouté pour l'événement: ${event}`);
   }
 
   public removeEventListener(event: WebSocketEventType, callback: WebSocketCallback) {
@@ -113,13 +108,11 @@ export class WebSocketService {
       const index = callbacks.indexOf(callback);
       if (index !== -1) {
         callbacks.splice(index, 1);
-        console.log(`🗑️ Écouteur supprimé pour l'événement: ${event}`);
       }
     }
   }
 
   private notifyListeners(event: WebSocketEventType, data: WebSocketEvent) {
-    console.log(`📢 Notification des écouteurs pour l'événement: ${event}`);
     const callbacks = this.listeners.get(event);
     callbacks?.forEach(callback => callback(data));
   }
@@ -129,6 +122,7 @@ export class WebSocketService {
       console.error('❌ WebSocket non connecté');
       return;
     }
+    console.log('🔍 sendMessage:', matchId, content)
 
     const message: MessageEvent = {
       event: 'send_message',
@@ -138,7 +132,6 @@ export class WebSocketService {
     };
 
     this.send(message);
-    console.log('📤 Message envoyé:', content.substring(0, 50));
   }
 
   public markMessageAsRead(matchId: string, messageId: string, senderId: string) {
@@ -148,29 +141,26 @@ export class WebSocketService {
       message_id: messageId,
       sender_id: senderId
     });
-    console.log('👀 Message marqué comme lu:', messageId);
   }
 
-  public sendTypingStatus(matchId: string, receiverId: string) {
+  public sendTypingStatus(matchId: string, receiverId: string, isTyping: boolean) {
     this.send({
       event: 'user_typing',
       match_id: matchId,
-      receiver_id: receiverId
+      receiver_id: receiverId,
+      is_typing: isTyping
     });
-  
-    console.log('⌨️ Statut de frappe envoyé');
-  }
+    }
 
   private send(data: WebSocketEvent) {
-    console.log('📤 Tentative d\'envoi de message WebSocket:', {
-      event: data.event,
-      readyState: this.ws?.readyState,
-      timestamp: new Date().toISOString()
-    });
+    // console.log('📤 Tentative d\'envoi de message WebSocket:', {
+    //   event: data.event,
+    //   readyState: this.ws?.readyState,
+    //   timestamp: new Date().toISOString()
+    // });
     
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
-      console.log('✅ Message envoyé avec succès');
     } else {
       console.error('❌ WebSocket non connecté. État:', {
         readyState: this.ws?.readyState,
@@ -208,7 +198,7 @@ export class WebSocketService {
   }
 
   public requestOnlineStatus() {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+    if (!this.ws) {
       console.error('❌ WebSocket non connecté');
       return;
     }

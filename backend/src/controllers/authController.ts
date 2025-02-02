@@ -1,5 +1,12 @@
 import { Request, Response } from "express";
 import UserPhotoModel from "@/models/userPhotoModel";
+import UserModel, { IUser } from "@/models/userModel";
+;
+
+// Vérifier que les variables sont bien définies
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION || "1h";
 
 interface CustomRequest extends Request {
   user?: { id: string };
@@ -7,10 +14,6 @@ interface CustomRequest extends Request {
 
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-import UserModel, { IUser } from "@/models/userModel";
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || "kfefekfe";
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || "fzfzrzfe";
-const TOKEN_EXPIRATION = "1h"; // Expiration du token d'accès
 
 /**
  * Register a new user.
@@ -55,9 +58,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       // preferences: preferences
     });
 
+
+
     // Générer les tokens
     const accessToken = jwt.sign(
-      { id: newUser._id, roles: newUser.roles },
+      { id: newUser._id, roles: newUser.roles, email: newUser.email, userId: newUser._id },
       ACCESS_TOKEN_SECRET,
       { expiresIn: TOKEN_EXPIRATION }
     );
@@ -88,6 +93,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
  * @param req.body.password - The user's password.
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
+  console.log(ACCESS_TOKEN_SECRET);
+  console.log(REFRESH_TOKEN_SECRET);
+  console.log(TOKEN_EXPIRATION);
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -111,7 +119,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Générer les tokens
     const accessToken = jwt.sign(
-      { id: user._id, roles: user.roles },
+      { id: user._id, roles: user.roles, email: user.email, userId: user._id },
       ACCESS_TOKEN_SECRET,
       { expiresIn: TOKEN_EXPIRATION }
     );
@@ -178,7 +186,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
 
     // Générer un nouveau token d'accès
     const newAccessToken = jwt.sign(
-      { id: user._id, roles: user.roles },
+      { id: user._id, roles: user.roles, email: user.email, userId: user._id },
       ACCESS_TOKEN_SECRET,
       { expiresIn: TOKEN_EXPIRATION }
     );

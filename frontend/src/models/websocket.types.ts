@@ -104,6 +104,7 @@ export interface NewMatch {
 export interface UserTyping {
     match_id: string;
     sender_id: string;
+    is_typing: boolean;
 }
 
 export interface WebSocketNotification {

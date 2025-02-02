@@ -35,20 +35,22 @@ function App() {
   const dispatch = useAppDispatch()
   const [checkingAuth, setCheckingAuth] = useState(true)
 
-  const wsService = new WebSocketService();
-
+  // Gérer la connexion WebSocket en fonction de l'authentification
   useEffect(() => {
-    wsService.connect();
+    if (isAuthenticated && !loading && !checkingAuth) {
+      dispatch({ type: 'websocket/connect' });
 
-    return () => {
-      wsService.disconnect();
+      return () => {
+          dispatch({ type: 'websocket/disconnect' });
+      };
     }
-  }, []);
+  }, [isAuthenticated, loading, checkingAuth, dispatch]);
 
+  // Vérifier l'authentification au chargement
   useEffect(() => {
     const initAuth = async () => {
       await dispatch(autoLogin())
-      setCheckingAuth(false) // Auth check terminé
+      setCheckingAuth(false)
     }
     initAuth()
   }, [dispatch])
