@@ -60,6 +60,7 @@ const websocketSlice = createSlice({
       state.isConnected = action.payload;
     },
     clearTypingStatus: (state, action: PayloadAction<string>) => {
+      console.log('🔹 clearTypingStatus:', action.payload)
       const { [action.payload]: _, ...rest } = state.typingStates;
       state.typingStates = rest;
     }

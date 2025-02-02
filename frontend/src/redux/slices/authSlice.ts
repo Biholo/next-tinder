@@ -36,6 +36,7 @@ export const autoLogin = createAsyncThunk(
             if (accessToken) {
                 try {
                     const user = await authService.getUserByToken(accessToken);
+                    console.log('User login:', user)
                     return { user, tokens: { accessToken, refreshToken: refreshToken || '' } };
                 } catch (error) {
                     if (!refreshToken) throw new Error('Pas de refresh token');

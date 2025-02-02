@@ -1,4 +1,4 @@
-import type { Match } from "@/models/chat"
+import type { Match } from "@/models"
 
 interface ConversationListProps {
   matches: Match[]

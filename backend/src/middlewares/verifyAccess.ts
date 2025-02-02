@@ -22,9 +22,6 @@ export const verifyAccess =
       return;
     }
 
-    console.log(user.role);
-    console.log(allowedRoles);
-
     if (!user.role || !allowedRoles.some(roleGroup => roleGroup.includes(user.role))) {
       res.status(403).json({ message: "Forbidden: You do not have access to this resource." });
       return;

@@ -1,122 +1,75 @@
-import { Middleware, MiddlewareAPI, Dispatch, AnyAction } from '@reduxjs/toolkit';
+import { Middleware } from '@reduxjs/toolkit';
+import { clearTypingStatus, removeUserOnlineStatus, setConnectionStatus, setLastMessage, setNewMatch, setTypingStatus, setUserOnlineStatus } from '@/redux/slices/websocketSlice';
+import { removeMatch } from '@/redux/slices/matcheSlice';
+import { addConversation, updateLastMessage } from '@/redux/slices/conversationSlice';
+import { addMessage } from '@/redux/slices/messageSlice';
+import { AppDispatch, RootState } from '@/redux/store';
 import { wsService } from '@/services/websocketService';
-import { 
-  setTypingStatus, 
-  setUserOnlineStatus, 
-  addReadMessage, 
-  setLastMessage,
-  setConnectionStatus 
-} from '@/redux/slices/websocketSlice';
-import { WebSocketEvent, TypingEvent, MessageEvent, MessageReadEvent } from '@/models/websocket';
-import { RootState } from '../store';
 
-const websocketMiddleware = ((store) => (next) => (action) => {
-  // Gestion des événements WebSocket
-  const handleWebSocketEvent = (data: WebSocketEvent) => {
-    const { dispatch } = store;
+const websocketMiddleware: Middleware<{}, RootState, AppDispatch> = (store) => {
+    return (next) => (action: any) => {
+        switch (action.type) {
+            case 'websocket/connect':
+                wsService.connect();
 
-    switch (data.event) {
-      case 'user_typing_display': {
-        console.log('🔔 Event received [user_typing_display]:', data);
-        const typingEvent = data as TypingEvent;
-        dispatch(setTypingStatus({ matchId: typingEvent.match_id, isTyping: true }));
-        setTimeout(() => {
-          dispatch(setTypingStatus({ matchId: typingEvent.match_id, isTyping: false }));
-        }, 3000);
-        break;
-      }
-      case 'user_connected': {
-        dispatch(setUserOnlineStatus({ userId: data.user_id, isOnline: true }));
-        break;
-      }
-      case 'user_disconnected': {
-        dispatch(setUserOnlineStatus({ userId: data.user_id, isOnline: false }));
-        break;
-      }
-      case 'receive_message': {
-        const messageEvent = data as MessageEvent;
-        dispatch(setLastMessage({
-          matchId: messageEvent.match_id,
-          content: messageEvent.content,
-          timestamp: messageEvent.created_at?.toISOString() || new Date().toISOString(),
-          senderId: messageEvent.sender_id || ''
-        }));
-        break;
-      }
-      case 'message_read': {
-        const readEvent = data as MessageReadEvent;
-        dispatch(addReadMessage({
-          matchId: readEvent.match_id,
-          messageId: readEvent.message_id
-        }));
-        break;
-      }
-    }
-  };
+                /** Lorsqu'un message est reçu */
+                wsService.addEventListener('receive_message', (data: any) => {
+                    store.dispatch(addMessage(data));
+                });
 
-  const events = [
-    'user_typing_display',
-    'user_connected',
-    'user_disconnected',
-    'receive_message',
-    'message_read',
-    'new_match'
-  ];
+                /** Confirmation de lecture */
+                wsService.addEventListener('message_read_confirm', (data: any) => {
+                    console.log('Message lu:', data);
+                });
 
-  let isConnected = false;
-  let currentUserId: string | null = null;
+                /** Indicateur "En train d’écrire" */
+                wsService.addEventListener('user_typing_display', (data: any) => {
+                  if(data.is_typing) {
+                    store.dispatch(setTypingStatus(data));
+                  } else {
+                    store.dispatch(clearTypingStatus(data.match_id));
+                  }
+                });
 
-  const handleConnection = () => {
-    const state = store.getState() as RootState;
-    const { isAuthenticated, user } = state.auth;
-    
-    if (isAuthenticated && user?._id && !isConnected) {
-      console.log('🔌 Tentative de connexion WebSocket...');
-      wsService.connect();
-      isConnected = true;
-      currentUserId = user._id;
+                /** Nouveaux matchs */
+                wsService.addEventListener('new_match', (data: any) => {
+                    store.dispatch(setNewMatch(data));
+                });
 
-      // Ajouter les écouteurs
-      events.forEach(event => {
-        wsService.addEventListener(event, handleWebSocketEvent);
-      });
+                /** Statut en ligne */
+                wsService.addEventListener('user_connected', (data: any) => {
+                    store.dispatch(setUserOnlineStatus(data));
+                });
 
-      // Mise à jour du statut de connexion
-      store.dispatch(setConnectionStatus(true));
-    }
-  };
+                /** Statut en ligne */
+                wsService.addEventListener('online_status', (data: any) => {
+                    console.log('🔹 online_status:', data)
+                    store.dispatch(setUserOnlineStatus(data));
+                });
 
-  // Fonction pour gérer la déconnexion WebSocket
-  const handleDisconnection = () => {
-    if (isConnected && currentUserId) {
-      console.log('👋 Déconnexion WebSocket...');
-      wsService.sendUserDisconnected(currentUserId);
-      
-      // Retirer les écouteurs
-      events.forEach(event => {
-        wsService.removeEventListener(event, handleWebSocketEvent);
-      });
+                /** Déconnexion d'un utilisateur */
+                wsService.addEventListener('user_disconnected', (data: any) => {
+                    store.dispatch(removeUserOnlineStatus(data));
+                });
 
-      wsService.disconnect();
-      isConnected = false;
-      currentUserId = null;
-      store.dispatch(setConnectionStatus(false));
-    }
-  };
+                store.dispatch(setConnectionStatus(true));
+                break;
 
-  // Vérifier les changements d'état d'authentification
-  if ((action as AnyAction).type === 'auth/setUser' || (action as AnyAction).type === 'auth/logout') {
-    const state = store.getState() as RootState;
-    const { isAuthenticated } = state.auth;
+            case 'websocket/disconnect':
+                wsService.disconnect();
+                store.dispatch(setConnectionStatus(false));
+                break;
 
-    if (isAuthenticated) {
-      handleConnection();
-    } else {
-      handleDisconnection();
-    }
-  }
+            case 'websocket/sendMessage':
+                wsService.sendMessage(action.payload.matchId, action.payload.content);
+                break;
 
-  return next(action);
-}) as Middleware;
+            default:
+                break;
+        }
 
-export default websocketMiddleware; 
+        return next(action);
+    };
+};
+
+export default websocketMiddleware;

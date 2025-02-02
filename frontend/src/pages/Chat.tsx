@@ -40,7 +40,6 @@ export default function ChatPage() {
   // Connexion WebSocket et gestion des événements
   useEffect(() => {
     if (currentUser?._id) {
-      wsService.connect();
 
       const handleNewMessage = (data: any) => {
         if (data.match_id === matchId) {
@@ -107,6 +106,7 @@ export default function ChatPage() {
     if (!content.trim() || !matchId) return;
 
     // Envoyer via WebSocket
+    console.log('🔍 sendMessage:', matchId, content)
     wsService.sendMessage(matchId, content);
 
     // Optimistic update

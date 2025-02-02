@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { ImageIcon, Smile } from "lucide-react"
 import { wsService } from "@/services/websocketService"
 
@@ -9,21 +9,39 @@ interface MessageInputProps {
 }
 
 export function MessageInput({ onSendMessage, matchId, receiverId }: MessageInputProps) {
-  const [message, setMessage] = useState("")
+  const [message, setMessage] = useState("");
+  const [newMessage, setNewMessage] = useState("");
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newMessage = e.target.value
-    setMessage(newMessage)
-    wsService.sendTypingStatus(matchId, receiverId)
-  }
+    const newMessage = e.target.value;
+    setMessage(newMessage);
+
+    // Envoyer un signal "en train d'écrire" avec un délai
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    typingTimeoutRef.current = setTimeout(() => {
+      wsService.sendTypingStatus(matchId, receiverId, true);
+    }, 500); // Déclenche après 500ms sans frappe
+  };
+
+
+  //si la personne n'écrit plus, on envoie un signal "ne plus écrire"
+  useEffect(() => {
+    if (message.trim() === "") {
+      wsService.sendTypingStatus(matchId, receiverId, false);
+    }
+  }, [message]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    
+    wsService.sendTypingStatus(matchId, receiverId, false);
     if (message.trim()) {
-      onSendMessage(message)
-      setMessage("")
+      onSendMessage(message);
+      setMessage("");
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="p-4 border-t">
